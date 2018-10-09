@@ -1,0 +1,2 @@
+# TFS States
+Quick and dirty TFS state transition tool that generates an Excel report of TFS work item transition information. It queries TFS work items such as stories and bugs and generates an Excel report showing how many times they've transitioned state. Each state change shows the prior and next state, state change reason, who changed the state, when the state was changed, and duration between state change.

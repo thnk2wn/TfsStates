@@ -13,6 +13,6 @@ namespace TfsStates.Models
 
         public string Password { get; set; }
 
-        public string Message { get; set; }
+        public TfsConnectionValidationResult ValidationResult { get; set; }
     }
 }

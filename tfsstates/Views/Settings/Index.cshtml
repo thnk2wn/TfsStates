@@ -12,10 +12,12 @@
         $(function () {
             $("#UseWindowsIdentity").change(function () {
                 if (this.checked) {
+                    console.log("windows identity checked!");
                     $("#Username").attr("disabled");
                     $("#Password").attr("disabled");
                 }
                 else {
+                    console.log("windows identity unchecked");
                     $("#Username").removeAttr("disabled");
                     $("#Password").removeAttr("disabled");
                 }
@@ -23,11 +25,6 @@
         });
     </script>
 }
-<!--
-<p class="button">
-    <a asp-controller="Settings" asp-action="TestConnection" asp-route-id="">Test</a>
-</p>
--->
 
 <form asp-antiforgery="true" asp-controller="Settings" asp-action="SaveConnection">
     <h2>App Settings</h2>
@@ -73,4 +70,13 @@
     </fieldset>
 
     <input type="submit" value="Save" />
+
+    @if (Model.ValidationResult != null 
+        && !Model.ValidationResult.IsError 
+        && !string.IsNullOrEmpty(Model.ValidationResult.Message)) { 
+        <div class="alert alert-success alert-dismissible tfs-settings-validate-success" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            @Model.ValidationResult.Message
+        </div>
+    }
 </form>
