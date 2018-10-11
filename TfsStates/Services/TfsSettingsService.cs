@@ -32,26 +32,33 @@ namespace TfsStates.Services
             return File.Exists(filename);
         }
 
-        public async Task<TfsConnectionModel> GetSettingsOrDefault()
+        public async Task<TfsConnectionModel> GetSettings()
         {
-            var model = new TfsConnectionModel
-            {
-                UseWindowsIdentity = true
-            };
-
             var filename = await GetFilename();
 
             if (File.Exists(filename))
             {
                 var json = await File.ReadAllTextAsync(filename);
-                model = JsonConvert.DeserializeObject<TfsConnectionModel>(json);
+                var model = JsonConvert.DeserializeObject<TfsConnectionModel>(json);
 
                 if (!model.UseWindowsIdentity)
                 {
                     model.Password = EncryptionService.DecryptString(model.Password, EncryptionSettings.Key);
                 }
+
+                return model;
             }
 
+            return null;
+        }
+
+        public async Task<TfsConnectionModel> GetSettingsOrDefault()
+        {
+            var model = (await GetSettings())
+                ?? new TfsConnectionModel
+                {
+                    UseWindowsIdentity = true
+                };
             return model;
         }
 

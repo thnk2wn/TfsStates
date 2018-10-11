@@ -6,6 +6,7 @@ namespace TfsStates.Services
     public interface ITfsSettingsService
     {
         Task<string> GetFilename();
+        Task<TfsConnectionModel> GetSettings();
         Task<TfsConnectionModel> GetSettingsOrDefault();
         Task<bool> HasSettings();
         Task<TfsConnectionModel> Save(TfsConnectionModel model, bool validate = true);

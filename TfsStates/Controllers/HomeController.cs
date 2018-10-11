@@ -1,18 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using TfsStates.Models;
+using TfsStates.Services;
 
 namespace TfsStates.Controllers
 {
     public class HomeController : Controller
     {
-        public IActionResult Index()
+        private readonly ITfsProjectService projectService;
+
+        public HomeController(ITfsProjectService projectService)
         {
-            return View();
+            this.projectService = projectService;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var model = new TfsStatesModel
+            {
+                Projects = await projectService.GetProjectNames()
+            };
+
+            return View(model);
         }
 
         public IActionResult About()

@@ -15,5 +15,11 @@ namespace TfsStates.Models
         public string Password { get; set; }
 
         public TfsConnectionValidationResult ValidationResult { get; set; }
+
+        public bool IsSet()
+        {
+            return !string.IsNullOrEmpty(Url)
+                && (UseWindowsIdentity || (!string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Password)));
+        }
     }
 }
