@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using TfsStates.Models;
@@ -8,19 +10,79 @@ namespace TfsStates.Controllers
 {
     public class HomeController : Controller
     {
+        private readonly ITfsSettingsService settingsService;
         private readonly ITfsProjectService projectService;
 
-        public HomeController(ITfsProjectService projectService)
+        public HomeController(
+            ITfsSettingsService settingsService,
+            ITfsProjectService projectService)
         {
+            this.settingsService = settingsService;
             this.projectService = projectService;
         }
 
         public async Task<IActionResult> Index()
         {
-            var model = new TfsStatesModel
+            var model = new TfsStatesModel();
+            model.Projects.Insert(0, "- Select project -");
+            var settingsUrl = Url.Action("Index", "Settings");
+
+            try
             {
-                Projects = await projectService.GetProjectNames()
-            };
+                var settings = await settingsService.GetSettings();
+
+                if (settings == null)
+                {
+                    model.RunReadyState.NotReady(
+                        $"<a href='{settingsUrl}'>TFS settings</a> need to first be supplied.");
+                }
+                else
+                {
+                    if (!settings.IsSet())
+                    {
+                        model.RunReadyState.NotReady(
+                            $"Some <a href='{settingsUrl}'>TFS settings</a> are missing and " +
+                            $"must first be supplied.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex);
+                model.RunReadyState.NotReady(
+                        $"Error loading <a href='{settingsUrl}'>TFS settings</a>. " +
+                        $"Adjust settings and try again.");
+            }
+
+            if (model.RunReadyState.State == TfsStatesModel.RunStates.NotReady) return View(model);
+
+            try
+            {
+                var projectNames = await this.projectService.GetProjectNames();
+
+                if (projectNames == null || !projectNames.Any())
+                {
+                    model.RunReadyState.NotReady(
+                        $"No TFS projects found. Check <a href='{settingsUrl}'>TFS settings</a> " +
+                        $"and try again.");
+                }
+                else
+                {
+                    model.Projects.AddRange(projectNames);
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex);
+                model.RunReadyState.NotReady(
+                        $"Error loading TFS projects. Check <a href='{settingsUrl}'>TFS settings</a> " +
+                        $"and your connectivity and try again.");
+            }
+
+            if (string.IsNullOrEmpty(model.RunReadyState.Message))
+            {
+                model.RunReadyState.IsReady = true;
+            }            
 
             return View(model);
         }

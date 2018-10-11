@@ -16,6 +16,9 @@ namespace TfsStates.Services
             this.tfsSettingsService = tfsSettingsService;
         }
 
+        // TODO: Consider caching such as https://github.com/alastairtree/LazyCache?WT.mc_id=-blog-scottha
+        // https://www.hanselman.com/blog/UsingLazyCacheForCleanAndSimpleNETCoreInmemoryCaching.aspx
+        // consider to a file as well as memory
         public async Task<List<string>> GetProjectNames()
         {
             var settings = await this.tfsSettingsService.GetSettings();

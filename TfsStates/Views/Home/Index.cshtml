@@ -6,4 +6,15 @@
 
 <h2>TFS States Report</h2>
 
+@if (Model.RunReadyState != null
+       && !Model.RunReadyState.IsReady
+       && !string.IsNullOrEmpty(Model.RunReadyState.Message))
+{
+    <div class="alert alert-warning alert-dismissible" role="alert" id="readyAlert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        @Html.Raw(Model.RunReadyState.Message)
+    </div>
+}
+
+<label asp-for="Project" class="control-label"></label>
 <select asp-for="Project" asp-items="@(new SelectList(Model.Projects))"></select>
