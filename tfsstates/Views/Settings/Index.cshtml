@@ -9,19 +9,17 @@
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 
     <script type="text/javascript">
+        function onWindowsIdentityChange(checked) {
+            $("#Username").prop('disabled', checked);
+            $("#Password").prop('disabled', checked);  
+        }
+
         $(function () {
             $("#UseWindowsIdentity").change(function () {
-                if (this.checked) {
-                    console.log("windows identity checked!");
-                    $("#Username").attr("disabled");
-                    $("#Password").attr("disabled");
-                }
-                else {
-                    console.log("windows identity unchecked");
-                    $("#Username").removeAttr("disabled");
-                    $("#Password").removeAttr("disabled");
-                }
+                onWindowsIdentityChange(this.checked);               
             });
+
+            onWindowsIdentityChange(@Json.Serialize(Model.UseWindowsIdentity));
         });
     </script>
 }
@@ -32,8 +30,6 @@
     <div asp-validation-summary="All" class="text-danger"></div>
     <fieldset>
         <legend>TFS Connection</legend>
-
-        @*@Html.EditorForModel()*@
 
         <div class="row">
             <label asp-for="Url" class="col-md-1 control-label"></label>
