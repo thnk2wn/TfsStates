@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using ElectronNET.API;
 using ElectronNET.API.Entities;
 using Microsoft.TeamFoundation.Core.WebApi;
-using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
 using Newtonsoft.Json;
 using TfsStates.Models;
@@ -42,10 +41,15 @@ namespace TfsStates.Services
 
             var filename = await GetFilename();
 
-            if (System.IO.File.Exists(filename))
+            if (File.Exists(filename))
             {
                 var json = await File.ReadAllTextAsync(filename);
                 model = JsonConvert.DeserializeObject<TfsConnectionModel>(json);
+
+                if (!model.UseWindowsIdentity)
+                {
+                    model.Password = EncryptionService.DecryptString(model.Password, EncryptionSettings.Key);
+                }
             }
 
             return model;
@@ -54,8 +58,25 @@ namespace TfsStates.Services
         public async Task<TfsConnectionModel> Save(TfsConnectionModel model, bool validate = true)
         {
             string filename = await GetFilename();
+            var originalPassword = model.Password;
+
+            if (!model.UseWindowsIdentity)
+            {
+                model.Password = EncryptionService.EncryptString(model.Password, EncryptionSettings.Key);
+            }
+            else
+            {
+                model.Username = string.Empty;
+                model.Password = string.Empty;
+            }
+
             var json = JsonConvert.SerializeObject(model);
             await File.WriteAllTextAsync(filename, json);
+
+            if (!model.UseWindowsIdentity)
+            {
+                model.Password = originalPassword;
+            }
 
             if (validate)
             {
@@ -78,7 +99,7 @@ namespace TfsStates.Services
             try
             {
                 var uri = new Uri(model.Url);
-                var creds = new VssCredentials(model.UseWindowsIdentity);
+                var creds = TfsCredentialsFactory.Create(model);
                 var connection = new VssConnection(uri, creds);
 
                 var projectClient = connection.GetClient<ProjectHttpClient>();

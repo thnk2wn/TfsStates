@@ -10,8 +10,16 @@
 
     <script type="text/javascript">
         function onWindowsIdentityChange(checked) {
-            $("#Username").prop('disabled', checked);
-            $("#Password").prop('disabled', checked);  
+            var username = $("#Username");
+            var password = $("#Password");
+
+            username.prop('disabled', checked);
+            password.prop('disabled', checked);
+
+            if (checked) {
+                username.val('');
+                password.val('');
+            }
         }
 
         $(function () {
@@ -19,12 +27,19 @@
                 onWindowsIdentityChange(this.checked);               
             });
 
+            $("#settingsForm").submit(function (event) {
+                $("#saveButton").prop('disabled', true);
+                $("#SavingLabel").text('Saving and testing connection, please wait...');
+                $("#saveAlert").hide();
+            });
+
+
             onWindowsIdentityChange(@Json.Serialize(Model.UseWindowsIdentity));
         });
     </script>
 }
 
-<form asp-antiforgery="true" asp-controller="Settings" asp-action="SaveConnection">
+<form asp-antiforgery="true" asp-controller="Settings" asp-action="SaveConnection" id="settingsForm">
     <h2>App Settings</h2>
     <hr />
     <div asp-validation-summary="All" class="text-danger"></div>
@@ -59,18 +74,19 @@
 
             <label asp-for="Password" class="col-md-1 control-label"></label>
             <div class="form-group col-md-5">
-                <input asp-for="Password" class="form-control" type="password" />
+                <input asp-for="Password" class="form-control" value="@Model.Password" />
                 <span asp-validation-for="Password" class="text-danger"></span>
             </div>
         </div>
     </fieldset>
 
-    <input type="submit" value="Save" />
+    <input type="submit" id="saveButton" value="Save" />
+    <span id="SavingLabel" style="margin-left: 10px;"></span>
 
     @if (Model.ValidationResult != null 
         && !Model.ValidationResult.IsError 
         && !string.IsNullOrEmpty(Model.ValidationResult.Message)) { 
-        <div class="alert alert-success alert-dismissible tfs-settings-validate-success" role="alert">
+        <div class="alert alert-success alert-dismissible tfs-settings-validate-success" role="alert" id="saveAlert">
             <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             @Model.ValidationResult.Message
         </div>
