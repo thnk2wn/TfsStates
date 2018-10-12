@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -85,6 +86,22 @@ namespace TfsStates.Controllers
             }            
 
             return View(model);
+        }
+
+        [Route("/home/sprints/{project}")]
+        public async Task<IActionResult> GetSprints(string project)
+        {
+            var sprints = new List<string>();
+            sprints.Insert(0, "All Sprints");
+
+            var projectSprints = await this.projectService.GetSprints(project);
+
+            if (projectSprints != null)
+            {
+                sprints.AddRange(projectSprints);
+            }
+
+            return Json(sprints);
         }
 
         public IActionResult About()

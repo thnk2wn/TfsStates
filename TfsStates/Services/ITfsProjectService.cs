@@ -6,5 +6,7 @@ namespace TfsStates.Services
     public interface ITfsProjectService
     {
         Task<List<string>> GetProjectNames();
+
+        Task<List<string>> GetSprints(string projectName);
     }
 }

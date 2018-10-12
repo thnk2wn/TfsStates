@@ -7,8 +7,8 @@
 <h2>TFS States Report</h2>
 
 @if (Model.RunReadyState != null
-       && !Model.RunReadyState.IsReady
-       && !string.IsNullOrEmpty(Model.RunReadyState.Message))
+     && !Model.RunReadyState.IsReady
+     && !string.IsNullOrEmpty(Model.RunReadyState.Message))
 {
     <div class="alert alert-warning alert-dismissible" role="alert" id="readyAlert">
         <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -16,5 +16,49 @@
     </div>
 }
 
-<label asp-for="Project" class="control-label"></label>
-<select asp-for="Project" asp-items="@(new SelectList(Model.Projects))"></select>
+<div class="row">
+    <div class="col-md-6">
+        <label asp-for="Project" class="control-label"></label>
+        <select asp-for="Project" asp-items="@(new SelectList(Model.Projects))" id="Project"></select>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Sprint" class="control-label"></label>
+        <select asp-for="Sprint" asp-items="@(new SelectList(Model.Sprints))" id="Sprint"></select>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+
+    <script type="text/javascript">
+        var getSprints = function (projectName) {
+            var url = "/home/sprints/" + projectName;
+
+            $.get(url, function (data) {
+                console.log(data);
+
+                var output = [];
+                output.push('<option value="">All Sprints</option>');
+
+                $.each(data, function (key, value) {
+                    output.push('<option value="' + value + '">' + value + '</option>');
+                });
+
+                $('#Sprint').html(output.join(''));
+            })
+            .fail(function () {
+                alert("error getting sprints");
+            })
+            .always(function () {
+                console.log("finished getting sprints");
+            });
+        };
+
+        $(function () {
+            $("#Project").change(function () {
+                getSprints(this.value);
+            });
+        });
+    </script>
+}

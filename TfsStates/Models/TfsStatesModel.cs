@@ -7,6 +7,8 @@ namespace TfsStates.Models
         public TfsStatesModel()
         {
             this.Projects = new List<string>();
+            this.Sprints = new List<string>();
+
             this.RunReadyState = new RunReadyStateModel
             {
                 IsReady = false
@@ -15,7 +17,11 @@ namespace TfsStates.Models
 
         public List<string> Projects { get; set; }
 
+        public List<string> Sprints { get; set; }
+
         public string Project { get; set; }
+
+        public string Sprint { get; set; }
 
         public RunReadyStateModel RunReadyState { get; set; }
 

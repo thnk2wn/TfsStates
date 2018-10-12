@@ -62,6 +62,16 @@ namespace TfsStates.Services
             return model;
         }
 
+        public async Task<VssConnection> GetConnection()
+        {
+            var settings = await this.GetSettings();
+            if (settings == null) return null;
+
+            var creds = TfsCredentialsFactory.Create(settings);
+            var connection = new VssConnection(new Uri(settings.Url), creds);
+            return connection;
+        }
+
         public async Task<TfsConnectionModel> Save(TfsConnectionModel model, bool validate = true)
         {
             string filename = await GetFilename();
