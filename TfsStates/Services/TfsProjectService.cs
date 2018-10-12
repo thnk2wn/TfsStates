@@ -49,20 +49,43 @@ namespace TfsStates.Services
                 TreeStructureGroup.Iterations,
                 depth: int.MaxValue);
 
-            var list = new List<string>();
+            var list = new List<IterationItem>();
             GetIterations(list, rootIterationNode);
+            
+            var sortedSprintNames = list
+                .OrderBy(i => i.Path)
+                .ThenBy(i => i.StartDate)
+                .Select(i => i.Name)
+                .ToList();
 
-            return list;
+            return sortedSprintNames;
         }
 
-        private void GetIterations(List<string> list, WorkItemClassificationNode node, string path = "")
+        private void GetIterations(
+            List<IterationItem> list, 
+            WorkItemClassificationNode node, 
+            string path = "")
         {
-            if (path.Length > 0)
-                path = path + "/" + node.Name;
-            else 
-                path = node.Name;
+            var item = new IterationItem();
 
-            list.Add(path);
+            if (path.Length > 0)
+            {
+                item.Path = path + "/";
+                path = path + "/" + node.Name;
+            }
+            else 
+            { 
+                path = node.Name;
+            }
+
+            item.Name = path;
+
+            if (node.Attributes != null && node.Attributes.Any(a => a.Key == "startDate"))
+            {
+                item.StartDate = Convert.ToDateTime(node.Attributes["startDate"]);
+            }            
+
+            list.Add(item);
 
             if (node.Children != null)
             {
@@ -71,6 +94,15 @@ namespace TfsStates.Services
                     GetIterations(list, child, path);
                 }
             }
+        }
+
+        class IterationItem
+        {
+            public string Path { get; set; }
+
+            public string Name { get; set; }
+
+            public DateTime StartDate { get; set; }
         }
     }
 }

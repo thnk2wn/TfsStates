@@ -32,33 +32,46 @@
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 
     <script type="text/javascript">
-        var getSprints = function (projectName) {
+        var allSprintsOption = function () {
+            return '<option value="">All Sprints</option>';
+        };
+
+        var getSprints = function (projectName, index) {
+            
             var url = "/home/sprints/" + projectName;
+            
+            var sprintCombo = $('#Sprint');
 
-            $.get(url, function (data) {
-                console.log(data);
+            sprintCombo.html('<option value="">Loading...</option>');
 
-                var output = [];
-                output.push('<option value="">All Sprints</option>');
+            if (index > 0) {
+                $.get(url, function (data) {
+                    var output = [];
+                    output.push(allSprintsOption());
 
-                $.each(data, function (key, value) {
-                    output.push('<option value="' + value + '">' + value + '</option>');
+                    $.each(data, function (key, value) {
+                        output.push('<option value="' + value + '">' + value + '</option>');
+                    });
+
+                    sprintCombo.html(output.join(''));
+                })
+                .fail(function () {
+                    sprintCombo.html(allSprintsOption());
+                })
+                .always(function () {
                 });
-
-                $('#Sprint').html(output.join(''));
-            })
-            .fail(function () {
-                alert("error getting sprints");
-            })
-            .always(function () {
-                console.log("finished getting sprints");
-            });
+            }
+            else {
+                sprintCombo.html(allSprintsOption());
+            }
         };
 
         $(function () {
             $("#Project").change(function () {
-                getSprints(this.value);
+                getSprints(this.value, this.selectedIndex);
             });
+
+            $('#Sprint').html(allSprintsOption());
         });
     </script>
 }

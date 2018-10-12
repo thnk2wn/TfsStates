@@ -92,7 +92,6 @@ namespace TfsStates.Controllers
         public async Task<IActionResult> GetSprints(string project)
         {
             var sprints = new List<string>();
-            sprints.Insert(0, "All Sprints");
 
             var projectSprints = await this.projectService.GetSprints(project);
 
