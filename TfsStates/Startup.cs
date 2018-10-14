@@ -33,6 +33,7 @@ namespace TfsStates
             services.AddScoped<ITfsProjectService, TfsProjectService>();
             services.AddScoped<ITfsQueryService, TfsQueryService>();
             services.AddScoped<IExcelWriterService, ExcelWriterService>();
+            services.AddScoped<IBroadcastService, BroadcastService>();
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }

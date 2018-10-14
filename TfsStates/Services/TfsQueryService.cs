@@ -17,11 +17,17 @@ namespace TfsStates.Services
     public class TfsQueryService : ITfsQueryService
     {
         private readonly ITfsSettingsService tfsSettingsService;
+        private readonly IBroadcastService broadcastService;
         private WorkItemTrackingHttpClient workItemClient;
+        private object lockObject = new object();
+        private int processedCount;
 
-        public TfsQueryService(ITfsSettingsService tfsSettingsService)
+        public TfsQueryService(
+            ITfsSettingsService tfsSettingsService,
+            IBroadcastService broadCastService)
         {
             this.tfsSettingsService = tfsSettingsService;
+            this.broadcastService = broadCastService;
         }
 
         public async Task<List<TfsInfo>> Query(TfsStatesModel model)
@@ -120,6 +126,19 @@ namespace TfsStates.Services
                 }
 
                 revs.TfsInfo.TransitionCount = revs.States.Count;
+            }
+
+            lock (this.lockObject)
+            {
+                this.processedCount++;
+
+                var progress = new ReportProgress
+                {
+                    Message = $"Processed {revs.TfsInfo.Title}",
+                    WorkItemsProcessed = this.processedCount
+                };
+
+                this.broadcastService.ReportProgress(progress);
             }
 
             return revs.TfsInfo;

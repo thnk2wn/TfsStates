@@ -31,6 +31,8 @@ namespace TfsStates.Models
 
         public List<TfsInfo> Results { get; set; }
 
+        public string ResultFilename { get; set; }
+
         public class RunReadyStateModel
         {
             public RunReadyStateModel()

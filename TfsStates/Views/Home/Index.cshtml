@@ -9,8 +9,8 @@
 <form asp-antiforgery="true" asp-controller="Home" asp-action="RunReport" id="reportForm">
 
     @if (Model.RunReadyState != null
-      && !Model.RunReadyState.IsReady
-      && !string.IsNullOrEmpty(Model.RunReadyState.Message))
+     && !Model.RunReadyState.IsReady
+     && !string.IsNullOrEmpty(Model.RunReadyState.Message))
     {
         <div class="alert alert-warning alert-dismissible" role="alert" id="readyAlert">
             <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -33,6 +33,21 @@
     <div class="row">
         <div class="col-md-12">
             <input type="submit" id="runButton" value="Run Report" />
+        </div>
+    </div>
+
+    <div class="row" id="progressContainer" style="display: none; margin-top: 20px;">
+        <div class="col-md-12">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                    Work Items Processed <span class="badge" id="progressCount">0</span>
+                </h3>
+                </div>
+                <div class="panel-body" id="progressMessage">
+                    Running report...
+                </div>
+            </div>
         </div>
     </div>
 </form>
@@ -73,11 +88,26 @@
         };
 
         $(function () {
+            const { ipcRenderer } = require("electron");
+
             $("#Project").change(function () {
                 getIterations(this.value, this.selectedIndex);
             });
 
             $('#Iteration').html(allIterationsOption());
+
+            $("#reportForm").submit(function (event) {
+                $("#runButton").prop('disabled', true);
+                $("#progressContainer").show();
+            });
+
+            ipcRenderer.on('report-progress', (event, arg) => {
+                $('#progressMessage').html(arg.message);
+
+                if (arg.workItemsProcessed) {
+                    $('#progressCount').html(arg.workItemsProcessed);
+                }
+            });
         });
     </script>
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using ElectronNET.API;
 using Microsoft.AspNetCore.Mvc;
 using TfsStates.Models;
 using TfsStates.Services;
@@ -17,17 +18,20 @@ namespace TfsStates.Controllers
         private readonly ITfsProjectService projectService;
         private readonly ITfsQueryService tfsQueryService;
         private readonly IExcelWriterService excelWriterService;
+        private readonly IBroadcastService broadcastService;
 
         public HomeController(
             ITfsSettingsService settingsService,
             ITfsProjectService projectService,
             ITfsQueryService tfsQueryService, 
-            IExcelWriterService excelWriterService)
+            IExcelWriterService excelWriterService,
+            IBroadcastService broadcastService)
         {
             this.settingsService = settingsService;
             this.projectService = projectService;
             this.tfsQueryService = tfsQueryService;
             this.excelWriterService = excelWriterService;
+            this.broadcastService = broadcastService;
         }
 
         public async Task<IActionResult> Index()
@@ -112,12 +116,36 @@ namespace TfsStates.Controllers
 
         public async Task<IActionResult> RunReport(TfsStatesModel model)
         {
+            await FileUtility.Cleanup();
+
+            SendProgress($"Querying project {model.Project}, iteration under {model.Iteration}...");
             model.Results = await this.tfsQueryService.Query(model);
+
             var filename = await FileUtility.GetFilename($"TfsStates_{DateTime.Now.Ticks}.xlsx");
+            SendProgress($"Writing {filename}...");
+
             var settings = await this.settingsService.GetSettings();
             var projectUrl = $"{settings.Url}/{model.Project}";
             this.excelWriterService.Write(filename, model.Results, projectUrl);
+
+            SendProgress($"Launching {filename}...");
+            System.Threading.Thread.Sleep(1000);
+
+            model.ResultFilename = "file://" + filename;
+            await Electron.Shell.OpenExternalAsync(model.ResultFilename);
+
             return View(ViewName, model);
+        }
+
+        private void SendProgress(string message, int? processedCount = null)
+        {
+            var progress = new ReportProgress 
+            { 
+                Message = message,
+                WorkItemsProcessed = processedCount
+            };
+
+            this.broadcastService.ReportProgress(progress);
         }
 
         public IActionResult About()

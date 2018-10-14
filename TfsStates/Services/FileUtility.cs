@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using ElectronNET.API;
 using ElectronNET.API.Entities;
@@ -19,6 +21,28 @@ namespace TfsStates.Services
 
             var filename = Path.Combine(path, name);
             return filename;
+        }
+
+        public static async Task Cleanup(TimeSpan? olderThan = null)
+        {
+            olderThan = olderThan ?? TimeSpan.FromDays(7);
+            var appDataPath = await Electron.App.GetPathAsync(PathName.appData);
+            var path = Path.Combine(appDataPath, typeof(FileUtility).Assembly.GetName().Name);
+            var dir = new DirectoryInfo(path);
+
+            if (!dir.Exists) return;
+
+            var files = dir.GetFiles("*.xslx", SearchOption.TopDirectoryOnly)
+                .Where(fi => fi.LastWriteTime.Add(olderThan.Value) < DateTime.Now);
+
+            foreach (var file in files)
+            {
+                try
+                {
+                    file.Delete();
+                }
+                catch { }
+            }            
         }
     }
 }
