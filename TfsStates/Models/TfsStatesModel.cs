@@ -7,23 +7,29 @@ namespace TfsStates.Models
         public TfsStatesModel()
         {
             this.Projects = new List<string>();
-            this.Sprints = new List<string>();
+            this.Iterations = new List<string>();
 
             this.RunReadyState = new RunReadyStateModel
             {
                 IsReady = false
             };
+
+            this.MinTransitions = 1;
         }
 
         public List<string> Projects { get; set; }
 
-        public List<string> Sprints { get; set; }
+        public List<string> Iterations { get; set; }
 
         public string Project { get; set; }
 
-        public string Sprint { get; set; }
+        public string Iteration { get; set; }
+
+        public int MinTransitions { get; set; }
 
         public RunReadyStateModel RunReadyState { get; set; }
+
+        public List<TfsInfo> Results { get; set; }
 
         public class RunReadyStateModel
         {

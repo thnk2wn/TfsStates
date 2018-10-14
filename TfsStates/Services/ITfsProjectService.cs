@@ -7,6 +7,6 @@ namespace TfsStates.Services
     {
         Task<List<string>> GetProjectNames();
 
-        Task<List<string>> GetSprints(string projectName);
+        Task<List<string>> GetIterations(string projectName);
     }
 }

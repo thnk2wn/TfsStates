@@ -6,72 +6,78 @@
 
 <h2>TFS States Report</h2>
 
-@if (Model.RunReadyState != null
-     && !Model.RunReadyState.IsReady
-     && !string.IsNullOrEmpty(Model.RunReadyState.Message))
-{
-    <div class="alert alert-warning alert-dismissible" role="alert" id="readyAlert">
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        @Html.Raw(Model.RunReadyState.Message)
-    </div>
-}
+<form asp-antiforgery="true" asp-controller="Home" asp-action="RunReport" id="reportForm">
 
-<div class="row">
-    <div class="col-md-6">
-        <label asp-for="Project" class="control-label"></label>
-        <select asp-for="Project" asp-items="@(new SelectList(Model.Projects))" id="Project"></select>
+    @if (Model.RunReadyState != null
+      && !Model.RunReadyState.IsReady
+      && !string.IsNullOrEmpty(Model.RunReadyState.Message))
+    {
+        <div class="alert alert-warning alert-dismissible" role="alert" id="readyAlert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            @Html.Raw(Model.RunReadyState.Message)
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-6">
+            <label asp-for="Project" class="control-label"></label>
+            <select asp-for="Project" asp-items="@(new SelectList(Model.Projects))" id="Project"></select>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Iteration" class="control-label">Iteration Under</label>
+            <select asp-for="Iteration" asp-items="@(new SelectList(Model.Iterations))" id="Iteration"></select>
+        </div>
     </div>
 
-    <div class="col-md-6">
-        <label asp-for="Sprint" class="control-label"></label>
-        <select asp-for="Sprint" asp-items="@(new SelectList(Model.Sprints))" id="Sprint"></select>
+    <div class="row">
+        <div class="col-md-12">
+            <input type="submit" id="runButton" value="Run Report" />
+        </div>
     </div>
-</div>
+</form>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 
     <script type="text/javascript">
-        var allSprintsOption = function () {
-            return '<option value="">All Sprints</option>';
+        var allIterationsOption = function () {
+            return '<option value="">All Iterations</option>';
         };
 
-        var getSprints = function (projectName, index) {
-            
-            var url = "/home/sprints/" + projectName;
-            
-            var sprintCombo = $('#Sprint');
-
-            sprintCombo.html('<option value="">Loading...</option>');
+        var getIterations = function (projectName, index) {
+            var url = "/home/iterations/" + projectName;
+            var iterationCombo = $('#Iteration');
+            iterationCombo.html('<option value="">Loading...</option>');
 
             if (index > 0) {
                 $.get(url, function (data) {
                     var output = [];
-                    output.push(allSprintsOption());
+                    output.push(allIterationsOption());
 
                     $.each(data, function (key, value) {
                         output.push('<option value="' + value + '">' + value + '</option>');
                     });
 
-                    sprintCombo.html(output.join(''));
+                    iterationCombo.html(output.join(''));
                 })
                 .fail(function () {
-                    sprintCombo.html(allSprintsOption());
+                    iterationCombo.html(allIterationsOption());
                 })
                 .always(function () {
                 });
             }
             else {
-                sprintCombo.html(allSprintsOption());
+                iterationCombo.html(allIterationsOption());
             }
         };
 
         $(function () {
             $("#Project").change(function () {
-                getSprints(this.value, this.selectedIndex);
+                getIterations(this.value, this.selectedIndex);
             });
 
-            $('#Sprint').html(allSprintsOption());
+            $('#Iteration').html(allIterationsOption());
         });
     </script>
 }

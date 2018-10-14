@@ -11,15 +11,20 @@ namespace TfsStates.Controllers
 {
     public class HomeController : Controller
     {
+        private const string ViewName = "~/Views/Home/Index.cshtml";
+
         private readonly ITfsSettingsService settingsService;
         private readonly ITfsProjectService projectService;
+        private readonly ITfsQueryService tfsQueryService;
 
         public HomeController(
             ITfsSettingsService settingsService,
-            ITfsProjectService projectService)
+            ITfsProjectService projectService,
+            ITfsQueryService tfsQueryService)
         {
             this.settingsService = settingsService;
             this.projectService = projectService;
+            this.tfsQueryService = tfsQueryService;
         }
 
         public async Task<IActionResult> Index()
@@ -88,19 +93,24 @@ namespace TfsStates.Controllers
             return View(model);
         }
 
-        [Route("/home/sprints/{project}")]
-        public async Task<IActionResult> GetSprints(string project)
+        [Route("/home/iterations/{project}")]
+        public async Task<IActionResult> GetIterations(string project)
         {
-            var sprints = new List<string>();
+            var iterations = new List<string>();
+            var projectIterations = await this.projectService.GetIterations(project);
 
-            var projectSprints = await this.projectService.GetSprints(project);
-
-            if (projectSprints != null)
+            if (projectIterations != null)
             {
-                sprints.AddRange(projectSprints);
+                iterations.AddRange(projectIterations);
             }
 
-            return Json(sprints);
+            return Json(iterations);
+        }
+
+        public async Task<IActionResult> RunReport(TfsStatesModel model)
+        {
+            model.Results = await this.tfsQueryService.Query(model);
+            return View(ViewName, model);
         }
 
         public IActionResult About()

@@ -7,7 +7,7 @@ namespace TfsStates.Controllers
 {
     public class SettingsController : Controller
     {
-        private const string ViewName = "~/Views/Settings/Index.cshtml";
+        private const string ViewName = "~/Views/Settings.cshtml";
         private readonly ITfsSettingsService settingsService;
 
         public SettingsController(ITfsSettingsService settingsService)

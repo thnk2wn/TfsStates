@@ -37,7 +37,7 @@ namespace TfsStates.Services
             return projectNames;
         }
 
-        public async Task<List<string>> GetSprints(string projectName)
+        public async Task<List<string>> GetIterations(string projectName)
         {
             var connection = await this.tfsSettingsService.GetConnection();
             if (connection == null) return null;
@@ -52,13 +52,13 @@ namespace TfsStates.Services
             var list = new List<IterationItem>();
             GetIterations(list, rootIterationNode);
             
-            var sortedSprintNames = list
+            var sortedIterationNames = list
                 .OrderBy(i => i.Path)
                 .ThenBy(i => i.StartDate)
                 .Select(i => i.Name)
                 .ToList();
 
-            return sortedSprintNames;
+            return sortedIterationNames;
         }
 
         private void GetIterations(
@@ -70,8 +70,8 @@ namespace TfsStates.Services
 
             if (path.Length > 0)
             {
-                item.Path = path + "/";
-                path = path + "/" + node.Name;
+                item.Path = path + @"\";
+                path = path + @"\" + node.Name;
             }
             else 
             { 
