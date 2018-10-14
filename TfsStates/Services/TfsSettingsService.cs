@@ -1,8 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
-using ElectronNET.API;
-using ElectronNET.API.Entities;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
 using Newtonsoft.Json;
@@ -14,15 +12,7 @@ namespace TfsStates.Services
     {
         public async Task<string> GetFilename()
         {
-            var appDataPath = await Electron.App.GetPathAsync(PathName.appData);
-            var path = Path.Combine(appDataPath, this.GetType().Assembly.GetName().Name);
-
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
-
-            var filename = Path.Combine(path, "settings.json");
+            var filename = await FileUtility.GetFilename("settings.json");
             return filename;
         }
 

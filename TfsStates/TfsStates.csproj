@@ -3,6 +3,7 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="CsvHelper" Version="2.16.3" />
     <PackageReference Include="ElectronNET.API" Version="0.0.9" />
     <PackageReference Include="Humanizer.Core" Version="2.5.1" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
@@ -11,6 +12,9 @@
   </ItemGroup>
   <ItemGroup>
     <DotNetCliToolReference Include="ElectronNET.CLI" Version="0.0.9" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CsvHelper.Excel\CsvHelper.Excel.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Update="electron.manifest.json">

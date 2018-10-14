@@ -16,15 +16,18 @@ namespace TfsStates.Controllers
         private readonly ITfsSettingsService settingsService;
         private readonly ITfsProjectService projectService;
         private readonly ITfsQueryService tfsQueryService;
+        private readonly IExcelWriterService excelWriterService;
 
         public HomeController(
             ITfsSettingsService settingsService,
             ITfsProjectService projectService,
-            ITfsQueryService tfsQueryService)
+            ITfsQueryService tfsQueryService, 
+            IExcelWriterService excelWriterService)
         {
             this.settingsService = settingsService;
             this.projectService = projectService;
             this.tfsQueryService = tfsQueryService;
+            this.excelWriterService = excelWriterService;
         }
 
         public async Task<IActionResult> Index()
@@ -110,6 +113,10 @@ namespace TfsStates.Controllers
         public async Task<IActionResult> RunReport(TfsStatesModel model)
         {
             model.Results = await this.tfsQueryService.Query(model);
+            var filename = await FileUtility.GetFilename($"TfsStates_{DateTime.Now.Ticks}.xlsx");
+            var settings = await this.settingsService.GetSettings();
+            var projectUrl = $"{settings.Url}/{model.Project}";
+            this.excelWriterService.Write(filename, model.Results, projectUrl);
             return View(ViewName, model);
         }
 

@@ -56,7 +56,12 @@ namespace TfsStates.Services
 
             getRevsBlock.Complete();
             await getRevsBlock.Completion;
-            var list = queue.ToList();
+
+            var list = queue
+                .OrderBy(i => i.Iteration)
+                .ThenBy(i => i.Id)
+                .ToList();
+
             sw.Stop();
 
             return list;
