@@ -25,7 +25,7 @@ namespace TfsStates.Services
 
         public static async Task Cleanup(TimeSpan? olderThan = null)
         {
-            olderThan = olderThan ?? TimeSpan.FromDays(7);
+            olderThan = olderThan ?? TimeSpan.FromDays(3);
             var appDataPath = await Electron.App.GetPathAsync(PathName.appData);
             var path = Path.Combine(appDataPath, typeof(FileUtility).Assembly.GetName().Name);
             var dir = new DirectoryInfo(path);

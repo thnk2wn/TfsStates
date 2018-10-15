@@ -9,10 +9,14 @@ namespace TfsStates.Controllers
     {
         private const string ViewName = "~/Views/Home/Settings.cshtml";
         private readonly ITfsSettingsService settingsService;
+        private readonly IReportHistoryService reportHistoryService;
 
-        public SettingsController(ITfsSettingsService settingsService)
+        public SettingsController(
+            ITfsSettingsService settingsService,
+            IReportHistoryService reportHistoryService)
         {
             this.settingsService = settingsService;
+            this.reportHistoryService = reportHistoryService;
         }
 
         public async Task<IActionResult> Index()
@@ -37,6 +41,10 @@ namespace TfsStates.Controllers
 
             if (model.ValidationResult.IsError) { 
                 ModelState.AddModelError(string.Empty, model.ValidationResult.Message);
+            }
+            else
+            {
+                await this.reportHistoryService.Clear();
             }
 
             return View(ViewName, model);

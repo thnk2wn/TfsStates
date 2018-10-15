@@ -22,19 +22,22 @@ namespace TfsStates.Controllers
         private readonly ITfsQueryService tfsQueryService;
         private readonly IExcelWriterService excelWriterService;
         private readonly IBroadcastService broadcastService;
+        private readonly IReportHistoryService reportHistoryService;
 
         public HomeController(
             ITfsSettingsService settingsService,
             ITfsProjectService projectService,
             ITfsQueryService tfsQueryService, 
             IExcelWriterService excelWriterService,
-            IBroadcastService broadcastService)
+            IBroadcastService broadcastService,
+            IReportHistoryService reportHistoryService)
         {
             this.settingsService = settingsService;
             this.projectService = projectService;
             this.tfsQueryService = tfsQueryService;
             this.excelWriterService = excelWriterService;
             this.broadcastService = broadcastService;
+            this.reportHistoryService = reportHistoryService;
         }
 
         public async Task<IActionResult> Index()
@@ -127,7 +130,9 @@ namespace TfsStates.Controllers
             System.Threading.Thread.Sleep(1000);
 
             model.ResultFilename = fName;
-            await Electron.Shell.OpenExternalAsync(filename);            
+            await Electron.Shell.OpenExternalAsync(filename);
+
+            await this.reportHistoryService.Record(model);
 
             sw.Stop();
             var totalTransitions = queryResult.TfsItems.Sum(x => x.TransitionCount);
@@ -224,6 +229,16 @@ namespace TfsStates.Controllers
 
             if (model.RunReadyState.State == TfsStatesModel.RunStates.NotReady) return;
 
+            var lastReportRun = await this.reportHistoryService.GetLastRunSettings();
+
+            if (lastReportRun != null)
+            {
+                if (model.Projects?.Any() ?? false && model.Projects.Contains(lastReportRun.Project))
+                {
+                    model.Project = lastReportRun.Project;
+                }
+            }
+
             if (!string.IsNullOrEmpty(model.Project)
                 && model.Project != NoProjectSelected
                 && (!model.Iterations?.Any() ?? false))
@@ -238,6 +253,14 @@ namespace TfsStates.Controllers
                     model.RunReadyState.NotReady(
                         $"Error loading TFS iterations. Check <a href='{settingsUrl}'>TFS settings</a> " +
                         $"and your connectivity and try again.");
+                }
+            }
+
+            if (lastReportRun != null)
+            {
+                if (model.Iterations?.Any() ?? false && model.Iterations.Contains(lastReportRun.Iteration))
+                {
+                    model.Iteration = lastReportRun.Iteration;
                 }
             }
         }
