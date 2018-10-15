@@ -23,6 +23,7 @@ namespace TfsStates.Controllers
         private readonly IExcelWriterService excelWriterService;
         private readonly IBroadcastService broadcastService;
         private readonly IReportHistoryService reportHistoryService;
+        private readonly IChartService chartService;
 
         public HomeController(
             ITfsSettingsService settingsService,
@@ -30,7 +31,8 @@ namespace TfsStates.Controllers
             ITfsQueryService tfsQueryService, 
             IExcelWriterService excelWriterService,
             IBroadcastService broadcastService,
-            IReportHistoryService reportHistoryService)
+            IReportHistoryService reportHistoryService,
+            IChartService chartService)
         {
             this.settingsService = settingsService;
             this.projectService = projectService;
@@ -38,6 +40,7 @@ namespace TfsStates.Controllers
             this.excelWriterService = excelWriterService;
             this.broadcastService = broadcastService;
             this.reportHistoryService = reportHistoryService;
+            this.chartService = chartService;
         }
 
         public async Task<IActionResult> Index()
@@ -48,7 +51,19 @@ namespace TfsStates.Controllers
             if (string.IsNullOrEmpty(model.RunReadyState.Message))
             {
                 model.RunReadyState.IsReady = true;
-            }            
+            }
+
+            /*
+            var testChartFilename = await FileUtility.GetFilename("_test-chart-data.json");
+
+            if (System.IO.File.Exists(testChartFilename))
+            {
+                var json = await System.IO.File.ReadAllTextAsync(testChartFilename);
+                var data = JsonConvert.DeserializeObject<TfsQueryResult>(json);
+                var chart = chartService.CreateBarChart(data);
+                ViewData["chart"] = chart;
+            }
+            */
 
             return View(model);
         }
@@ -118,6 +133,8 @@ namespace TfsStates.Controllers
                 return View(ViewName, model);
             }
 
+            // var json = JsonConvert.SerializeObject(queryResult);
+
             var fName = $"TfsStates_{DateTime.Now.Ticks}.xlsx";
             var filename = await FileUtility.GetFilename(fName);
             SendProgress($"Writing {filename}...");
@@ -134,14 +151,20 @@ namespace TfsStates.Controllers
 
             await this.reportHistoryService.Record(model);
 
+            var chart = chartService.CreateBarChart(queryResult);
+            ViewData["chart"] = chart;
+
             sw.Stop();
             var totalTransitions = queryResult.TfsItems.Sum(x => x.TransitionCount);
+            var avgTransitions = Math.Round(queryResult.TfsItems.Average(x => x.TransitionCount), 0);
+
             model.FinalProgress = new ReportProgress
             {
                 WorkItemsProcessed = queryResult.TotalWorkItems,
-                Message = $"Processed {"work item".ToQuantity(queryResult.TotalWorkItems)} and " +
-                    $"{"revision".ToQuantity(queryResult.TotalRevisions)} in {sw.Elapsed.Humanize()}. " +
-                    $"{"transition".ToQuantity(totalTransitions)}."
+                Message = $"Processed {"work item".ToQuantity(queryResult.TotalWorkItems, "###,##0")} and " +
+                    $"{"revision".ToQuantity(queryResult.TotalRevisions, "###,##0")} in {sw.Elapsed.Humanize()}. " +
+                    $"{"transition".ToQuantity(totalTransitions, "###,##0")}. " +
+                    $"Average work item transitions: {avgTransitions}"
             };
 
             return View(ViewName, model);
@@ -294,6 +317,6 @@ namespace TfsStates.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+        }        
     }
 }

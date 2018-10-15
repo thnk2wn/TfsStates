@@ -10,8 +10,8 @@
     <div asp-validation-summary="All" class="text-danger"></div>
 
     @if (Model.RunReadyState != null
-    && !Model.RunReadyState.IsReady
-    && !string.IsNullOrEmpty(Model.RunReadyState.Message))
+ && !Model.RunReadyState.IsReady
+ && !string.IsNullOrEmpty(Model.RunReadyState.Message))
     {
         <div class="alert alert-warning alert-dismissible" role="alert" id="readyAlert">
             <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -42,7 +42,7 @@
             <div class="panel panel-primary">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        Work Items Processed <span class="badge" id="progressCount">0</span>
+                        Work Items Processed <span class="badge" id="progressCount" style="maring-left: 4px;">0</span>
                         <span id="progressPer" style="margin-left: 10px;"></span>
                     </h3>
                 </div>
@@ -59,37 +59,50 @@
         </div>
     </div>
 
-    @if (Model.FinalProgress != null) { 
-    <div id="finalProgress" class="row" style="margin-top: 20px;">
-        <div class="col-md-12">
-            <div class="panel panel-success">
-                <div class="panel-heading">
-                    <h3 class="panel-title">
-                        Work Items Processed <span class="badge">@Model.FinalProgress.WorkItemsProcessed</span>
-                    </h3>
-                </div>
-                <div class="panel-body">
-                    <div>@Model.FinalProgress.Message</div>
-                   
-                    @if (Model.ResultFilename != null) {
-                    <div style="margin-top: 10px;">
-                        <button type="button" class="btn btn-success" onclick="viewReport('@Model.ResultFilename')">
-                        View Report
-                        </button>
-                        @*<a id="viewReport" href="javascript: viewReport('@Model.ResultFilename');">View Report</a>*@
+    @if (Model.FinalProgress != null)
+    {
+        <div id="finalProgress" class="row" style="margin-top: 20px;">
+            <div class="col-md-12">
+                <div class="panel panel-success">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            Work Items Processed <span class="badge">@Model.FinalProgress.WorkItemsProcessed</span>
+                        </h3>
                     </div>
-                    }
+                    <div class="panel-body">
+                        <div>@Model.FinalProgress.Message</div>
 
-                    <div id="viewReportResult" style="margin-top: 10px;"></div>
+                        @if (Model.ResultFilename != null)
+                        {
+                            <div style="margin-top: 10px;">
+                                <button type="button" class="btn btn-success" onclick="viewReport('@Model.ResultFilename')">
+                                    View Report
+                                </button>
+                                @*<a id="viewReport" href="javascript: viewReport('@Model.ResultFilename');">View Report</a>*@
+                            </div>
+                        }
+
+                        <div id="viewReportResult" style="margin-top: 10px;"></div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
     }
 </form>
 
+<div id="chartContainer"><canvas id="barChart"></canvas></div>
+
+@{ChartJSCore.Models.Chart chart = (ChartJSCore.Models.Chart)ViewData["chart"]; }
+
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+
+    <environment include="Development">
+        <script src="~/lib/chartjs/dist/Chart.js"></script>
+    </environment>
+    <environment exclude="Development">
+        <script src="~/lib/chartjs/dist/Chart.min.js"></script>
+    </environment>
 
     <script type="text/javascript">
         var allIterationsOption = function () {
@@ -133,7 +146,7 @@
                 $('#viewReportResult').html("Error launching report " + name);
             })
             .always(function () {
-            });            
+            });
         };
 
         $(function () {
@@ -151,7 +164,8 @@
                 $("#runButton").prop('disabled', true);
                 $("#progressMessage").html("Running report...");
                 $("#progressContainer").show();
-                $("finalProgress").hide();
+                $("#finalProgress").hide();
+                $("#chartContainer").hide();
             });
 
             ipcRenderer.on('report-progress', (event, arg) => {
@@ -166,5 +180,11 @@
                 }
             });
         });
+    </script>
+
+    <script>
+        @if (chart != null) { 
+            @Html.Raw(chart.CreateChartCode("barChart"));
+        }
     </script>
 }

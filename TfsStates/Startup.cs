@@ -35,6 +35,7 @@ namespace TfsStates
             services.AddScoped<IExcelWriterService, ExcelWriterService>();
             services.AddScoped<IBroadcastService, BroadcastService>();
             services.AddScoped<IReportHistoryService, ReportHistoryService>();
+            services.AddScoped<IChartService, ChartService>();
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }
@@ -64,7 +65,7 @@ namespace TfsStates
             Task.Run(async () => 
             {
                 var window = await Electron.WindowManager.CreateWindowAsync();
-                window.SetTitle("TFS States");
+                window.SetTitle("TFS States - [LOADING]");
                 window.Maximize();
             });
         }
