@@ -9,8 +9,8 @@
 <form asp-antiforgery="true" asp-controller="Home" asp-action="RunReport" id="reportForm">
 
     @if (Model.RunReadyState != null
-     && !Model.RunReadyState.IsReady
-     && !string.IsNullOrEmpty(Model.RunReadyState.Message))
+    && !Model.RunReadyState.IsReady
+    && !string.IsNullOrEmpty(Model.RunReadyState.Message))
     {
         <div class="alert alert-warning alert-dismissible" role="alert" id="readyAlert">
             <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -41,8 +41,8 @@
             <div class="panel panel-primary">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                    Work Items Processed <span class="badge" id="progressCount">0</span>
-                </h3>
+                        Work Items Processed <span class="badge" id="progressCount">0</span>
+                    </h3>
                 </div>
                 <div class="panel-body" id="progressMessage">
                     Running report...
@@ -50,6 +50,31 @@
             </div>
         </div>
     </div>
+
+    @if (Model.FinalProgress != null) { 
+    <div class="row" style="margin-top: 20px;">
+        <div class="col-md-12">
+            <div class="panel panel-success">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        Work Items Processed <span class="badge">@Model.FinalProgress.WorkItemsProcessed</span>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div>@Model.FinalProgress.Message</div>
+                   
+                    @if (Model.ResultFilename != null) {
+                    <div style="margin-top: 10px;">
+                        <a id="viewReport" href="javascript: viewReport('@Model.ResultFilename');">View Report</a>
+                    </div>
+                    }
+
+                    <div id="viewReportResult" style="margin-top: 10px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
 </form>
 
 @section Scripts {
@@ -85,6 +110,19 @@
             else {
                 iterationCombo.html(allIterationsOption());
             }
+        };
+
+        var viewReport = function (name) {
+            var url = "/home/viewreport/" + name;
+
+            $.get(url, function (filename) {
+                $('#viewReportResult').html("Launched " + filename);
+            })
+            .fail(function () {
+                $('#viewReportResult').html("Error launching report " + name);
+            })
+            .always(function () {
+            });            
         };
 
         $(function () {

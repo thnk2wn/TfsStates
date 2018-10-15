@@ -21,6 +21,7 @@ namespace TfsStates.Services
         private WorkItemTrackingHttpClient workItemClient;
         private object lockObject = new object();
         private int processedCount;
+        private int revisionsCount;
 
         public TfsQueryService(
             ITfsSettingsService tfsSettingsService,
@@ -30,7 +31,7 @@ namespace TfsStates.Services
             this.broadcastService = broadCastService;
         }
 
-        public async Task<List<TfsInfo>> Query(TfsStatesModel model)
+        public async Task<TfsQueryResult> Query(TfsStatesModel model)
         {
             var sw = Stopwatch.StartNew();
             var connection = await this.tfsSettingsService.GetConnection();
@@ -38,7 +39,7 @@ namespace TfsStates.Services
 
             this.workItemClient = connection.GetClient<WorkItemTrackingHttpClient>();
             var wiql = TfsQueryBuilder.BuildQuery(model);
-            var result = await this.workItemClient.QueryByWiqlAsync(new Wiql { Query = wiql });
+            var tfsQueryResult = await this.workItemClient.QueryByWiqlAsync(new Wiql { Query = wiql });
 
             var queue = new ConcurrentQueue<TfsInfo>();
             var asyncOptions = GetAsyncOptions();
@@ -55,7 +56,7 @@ namespace TfsStates.Services
                 },
                 asyncOptions);
 
-            foreach (var wiRef in result.WorkItems)
+            foreach (var wiRef in tfsQueryResult.WorkItems)
             {
                 getRevsBlock.Post(wiRef);
             }
@@ -70,7 +71,14 @@ namespace TfsStates.Services
 
             sw.Stop();
 
-            return list;
+            var result = new TfsQueryResult
+            {
+                TfsItems = list,
+                TotalWorkItems = this.processedCount,
+                TotalRevisions = this.revisionsCount
+            };
+
+            return result;
         }
 
         private bool AsyncTrace = false;
@@ -193,6 +201,11 @@ namespace TfsStates.Services
             }
 
             revs.States.Add(stateChange);
+
+            lock (this.lockObject)
+            {
+                this.revisionsCount++;
+            }
         }
 
         class WorkItemRevisionBuilder

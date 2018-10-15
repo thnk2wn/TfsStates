@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using ElectronNET.API;
+using Humanizer;
 using Microsoft.AspNetCore.Mvc;
 using TfsStates.Models;
 using TfsStates.Services;
@@ -116,25 +117,44 @@ namespace TfsStates.Controllers
 
         public async Task<IActionResult> RunReport(TfsStatesModel model)
         {
+            var sw = Stopwatch.StartNew();
             await FileUtility.Cleanup();
 
             SendProgress($"Querying project {model.Project}, iteration under {model.Iteration}...");
-            model.Results = await this.tfsQueryService.Query(model);
+            var queryResult = await this.tfsQueryService.Query(model);
 
-            var filename = await FileUtility.GetFilename($"TfsStates_{DateTime.Now.Ticks}.xlsx");
+            var fName = $"TfsStates_{DateTime.Now.Ticks}.xlsx";
+            var filename = await FileUtility.GetFilename(fName);
             SendProgress($"Writing {filename}...");
 
             var settings = await this.settingsService.GetSettings();
             var projectUrl = $"{settings.Url}/{model.Project}";
-            this.excelWriterService.Write(filename, model.Results, projectUrl);
+            this.excelWriterService.Write(filename, queryResult.TfsItems, projectUrl);
 
             SendProgress($"Launching {filename}...");
             System.Threading.Thread.Sleep(1000);
 
-            model.ResultFilename = "file://" + filename;
-            await Electron.Shell.OpenExternalAsync(model.ResultFilename);
+            model.ResultFilename = fName;
+            await Electron.Shell.OpenExternalAsync(filename);
+
+            sw.Stop();
+
+            model.FinalProgress = new ReportProgress
+            {
+                WorkItemsProcessed = queryResult.TotalWorkItems,
+                Message = $"Processed {"work item".ToQuantity(queryResult.TotalWorkItems)} and " +
+                    $"{"revision".ToQuantity(queryResult.TotalRevisions)} in {sw.Elapsed.Humanize()}."
+            };
 
             return View(ViewName, model);
+        }
+
+        [Route("/home/viewreport/{name}")]
+        public async Task<IActionResult> ViewReport(string name)
+        {
+            var filename = await FileUtility.GetFilename(name);
+            await Electron.Shell.OpenExternalAsync(filename);
+            return Json(filename);
         }
 
         private void SendProgress(string message, int? processedCount = null)

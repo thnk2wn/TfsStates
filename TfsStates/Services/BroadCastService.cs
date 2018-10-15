@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using ElectronNET.API;
+using TfsStates.Models;
 
 namespace TfsStates.Services
 {
@@ -15,12 +16,5 @@ namespace TfsStates.Services
             var mainWindow = Electron.WindowManager.BrowserWindows.First();
             Electron.IpcMain.Send(mainWindow, channel, data);
         }
-    }
-
-    public class ReportProgress
-    {
-        public string Message { get; set; }
-
-        public int? WorkItemsProcessed { get; set; }
-    }
+    }    
 }

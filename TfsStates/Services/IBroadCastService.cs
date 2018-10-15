@@ -1,4 +1,6 @@
-﻿namespace TfsStates.Services
+﻿using TfsStates.Models;
+
+namespace TfsStates.Services
 {
     public interface IBroadcastService
     {

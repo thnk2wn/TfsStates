@@ -29,9 +29,9 @@ namespace TfsStates.Models
 
         public RunReadyStateModel RunReadyState { get; set; }
 
-        public List<TfsInfo> Results { get; set; }
-
         public string ResultFilename { get; set; }
+
+        public ReportProgress FinalProgress { get; set; }
 
         public class RunReadyStateModel
         {
