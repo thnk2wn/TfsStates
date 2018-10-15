@@ -7,7 +7,7 @@ namespace TfsStates.Controllers
 {
     public class SettingsController : Controller
     {
-        private const string ViewName = "~/Views/Settings.cshtml";
+        private const string ViewName = "~/Views/Home/Settings.cshtml";
         private readonly ITfsSettingsService settingsService;
 
         public SettingsController(ITfsSettingsService settingsService)
@@ -18,7 +18,7 @@ namespace TfsStates.Controllers
         public async Task<IActionResult> Index()
         {
             var model = await this.settingsService.GetSettingsOrDefault();
-            return View(model);
+            return View(ViewName, model);
         }
 
         [HttpPost]

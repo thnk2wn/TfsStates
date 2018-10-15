@@ -63,6 +63,7 @@ namespace TfsStates
             Task.Run(async () => 
             {
                 var window = await Electron.WindowManager.CreateWindowAsync();
+                window.SetTitle("TFS States");
                 window.Maximize();
             });
         }

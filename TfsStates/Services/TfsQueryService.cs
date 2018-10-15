@@ -22,6 +22,7 @@ namespace TfsStates.Services
         private object lockObject = new object();
         private int processedCount;
         private int revisionsCount;
+        private int totalCount;
 
         public TfsQueryService(
             ITfsSettingsService tfsSettingsService,
@@ -41,6 +42,9 @@ namespace TfsStates.Services
             var wiql = TfsQueryBuilder.BuildQuery(model);
             var tfsQueryResult = await this.workItemClient.QueryByWiqlAsync(new Wiql { Query = wiql });
 
+            var workItems = tfsQueryResult.WorkItems.ToList();
+            this.totalCount = workItems.Count();
+
             var queue = new ConcurrentQueue<TfsInfo>();
             var asyncOptions = GetAsyncOptions();
 
@@ -56,7 +60,7 @@ namespace TfsStates.Services
                 },
                 asyncOptions);
 
-            foreach (var wiRef in tfsQueryResult.WorkItems)
+            foreach (var wiRef in workItems)
             {
                 getRevsBlock.Post(wiRef);
             }
@@ -142,8 +146,9 @@ namespace TfsStates.Services
 
                 var progress = new ReportProgress
                 {
-                    Message = $"Processed {revs.TfsInfo.Title}",
-                    WorkItemsProcessed = this.processedCount
+                    Message = $"{revs.TfsInfo.Title}",
+                    WorkItemsProcessed = this.processedCount,
+                    TotalCount = this.totalCount
                 };
 
                 this.broadcastService.ReportProgress(progress);

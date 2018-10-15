@@ -1,12 +1,13 @@
 ﻿@model TfsStatesModel
 
 @{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Home";
 }
 
 <h2>TFS States Report</h2>
 
 <form asp-antiforgery="true" asp-controller="Home" asp-action="RunReport" id="reportForm">
+    <div asp-validation-summary="All" class="text-danger"></div>
 
     @if (Model.RunReadyState != null
     && !Model.RunReadyState.IsReady
@@ -30,9 +31,9 @@
         </div>
     </div>
 
-    <div class="row">
+    <div class="row" style="margin-top: 10px; ">
         <div class="col-md-12">
-            <input type="submit" id="runButton" value="Run Report" />
+            <input type="submit" class="btn btn-primary" id="runButton" value="Run Report" />
         </div>
     </div>
 
@@ -42,17 +43,24 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">
                         Work Items Processed <span class="badge" id="progressCount">0</span>
+                        <span id="progressPer" style="margin-left: 10px;"></span>
                     </h3>
                 </div>
                 <div class="panel-body" id="progressMessage">
-                    Running report...
+                    <!--
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
+                            60%
+                        </div>
+                    </div>
+                    -->
                 </div>
             </div>
         </div>
     </div>
 
     @if (Model.FinalProgress != null) { 
-    <div class="row" style="margin-top: 20px;">
+    <div id="finalProgress" class="row" style="margin-top: 20px;">
         <div class="col-md-12">
             <div class="panel panel-success">
                 <div class="panel-heading">
@@ -65,7 +73,10 @@
                    
                     @if (Model.ResultFilename != null) {
                     <div style="margin-top: 10px;">
-                        <a id="viewReport" href="javascript: viewReport('@Model.ResultFilename');">View Report</a>
+                        <button type="button" class="btn btn-success" onclick="viewReport('@Model.ResultFilename')">
+                        View Report
+                        </button>
+                        @*<a id="viewReport" href="javascript: viewReport('@Model.ResultFilename');">View Report</a>*@
                     </div>
                     }
 
@@ -82,7 +93,7 @@
 
     <script type="text/javascript">
         var allIterationsOption = function () {
-            return '<option value="">All Iterations</option>';
+            return '<option value="">- Select iteration -</option>';
         };
 
         var getIterations = function (projectName, index) {
@@ -93,7 +104,7 @@
             if (index > 0) {
                 $.get(url, function (data) {
                     var output = [];
-                    output.push(allIterationsOption());
+                    // output.push(allIterationsOption());
 
                     $.each(data, function (key, value) {
                         output.push('<option value="' + value + '">' + value + '</option>');
@@ -132,11 +143,15 @@
                 getIterations(this.value, this.selectedIndex);
             });
 
-            $('#Iteration').html(allIterationsOption());
+            if ($("#Iteration option").length === 0) {
+                $('#Iteration').html(allIterationsOption());
+            }
 
             $("#reportForm").submit(function (event) {
                 $("#runButton").prop('disabled', true);
+                $("#progressMessage").html("Running report...");
                 $("#progressContainer").show();
+                $("finalProgress").hide();
             });
 
             ipcRenderer.on('report-progress', (event, arg) => {
@@ -144,6 +159,10 @@
 
                 if (arg.workItemsProcessed) {
                     $('#progressCount').html(arg.workItemsProcessed);
+                }
+
+                if (arg.percentDone) {
+                    $('#progressPer').html(arg.percentDone + '%');
                 }
             });
         });
