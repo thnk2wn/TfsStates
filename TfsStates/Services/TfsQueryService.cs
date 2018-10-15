@@ -117,7 +117,7 @@ namespace TfsStates.Services
                 if (state != null && lastState != state)
                 {
                     lastState = state;
-                    ProcessWorkItemRevision(workItemRev, revs);
+                    await ProcessWorkItemRevision(workItemRev, revs);
                 }            
             }
 
@@ -157,32 +157,36 @@ namespace TfsStates.Services
             return revs.TfsInfo;
         }
 
-        private void ProcessWorkItemRevision(WorkItem workItemRev, WorkItemRevisionBuilder revs)
+        private async Task ProcessWorkItemRevision(WorkItem workItemRev, WorkItemRevisionBuilder revs)
         {
             var stateChange = new StateChange
             {
                 State = workItemRev.State(),
                 Reason = workItemRev.Reason(),
-                By = workItemRev.ChangedBy()
+                By = workItemRev.ChangedByNameOnly()
             };
 
             if (revs.TfsInfo == null)
             {
+                // we just want the latest info for work item. might be able to grab from just the
+                // last revision
+                var workItem = await this.workItemClient.GetWorkItemAsync(workItemRev.Id.Value);
+
                 revs.TfsInfo = new TfsInfo
                 {
-                    Id = workItemRev.Id.Value,
-                    Title = workItemRev.Title(),
-                    Type = workItemRev.Type(),
-                    State = stateChange.State,
-                    Iteration = workItemRev.IterationPath(),
-                    Tags = workItemRev.Tags(),
-                    Priority = workItemRev.Priority(),
-                    ClosedDate = workItemRev.ClosedDate()
+                    Id = workItem.Id.Value,
+                    Title = workItem.Title(),
+                    Type = workItem.Type(),
+                    State = workItem.State(),
+                    Iteration = workItem.IterationPath(),
+                    Tags = workItem.Tags(),
+                    Priority = workItem.Priority(),
+                    ClosedDate = workItem.ClosedDate()
                 };
 
                 if (workItemRev.IsBug())
                 {
-                    revs.TfsInfo.Severity = workItemRev.Severity();
+                    revs.TfsInfo.Severity = workItem.Severity();
                 }
             }
 

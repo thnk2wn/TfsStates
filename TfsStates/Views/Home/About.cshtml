@@ -2,6 +2,30 @@
     ViewData["Title"] = "About";
 }
 <h2>@ViewData["Title"]</h2>
-<h3>@ViewData["Message"]</h3>
 
-<p>Use this area to provide additional information.</p>
+<h3>About this Application</h3>
+
+<p>
+    This application provides TFS reporting on state transitions in bulk.
+</p>
+
+<h3>About the Author</h3>
+
+<p>
+    See <a id="aboutLink" href="javascript:;">https://geoffhudik.com/about/</a>.
+</p>
+
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+
+    <script type="text/javascript">
+        $(function () {
+            const { ipcRenderer } = require("electron");
+
+            $('#aboutLink').click(function () {
+                ipcRenderer.send("link-about");
+            })
+        });
+    </script>
+}

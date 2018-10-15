@@ -150,6 +150,17 @@ namespace TfsStates.Controllers
             return Json(filename);
         }
 
+        private void RegisterOpenWebLink(string channel, string url)
+        {
+            if (HybridSupport.IsElectronActive) 
+            { 
+                Electron.IpcMain.On(channel, async (args) =>
+                {
+                    await Electron.Shell.OpenExternalAsync(url);
+                });
+            }
+        }
+
         private async Task LoadLookups(TfsStatesModel model)
         {
             model = model ?? new TfsStatesModel();
@@ -244,20 +255,15 @@ namespace TfsStates.Controllers
 
         public IActionResult About()
         {
-            ViewData["Message"] = "Your application description page.";
-
+            RegisterOpenWebLink("link-about", "https://geoffhudik.com/about/");
             return View();
         }
 
         public IActionResult Contact()
         {
-            ViewData["Message"] = "Your contact page.";
+            RegisterOpenWebLink("link-contact", "https://geoffhudik.com/contact/");
+            RegisterOpenWebLink("link-source", "https://github.com/thnk2wn/TfsStates");
 
-            return View();
-        }
-
-        public IActionResult Privacy()
-        {
             return View();
         }
 

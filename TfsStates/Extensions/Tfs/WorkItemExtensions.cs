@@ -89,5 +89,24 @@ namespace TfsStates.Extensions.Tfs
         {
             return workItem.GetFieldValue("System.ChangedBy");
         }
+
+        public static string ChangedByNameOnly(this WorkItem workItem)
+        {
+            var changedBy = workItem.ChangedBy();
+
+            if (changedBy == null) return null;
+
+            var pos = changedBy.IndexOf('<');
+            var pos2 = changedBy.IndexOf('>', pos+1);
+
+            if (pos > -1 && pos2 > pos)
+            {
+                var username = changedBy.Substring(pos, pos2 - pos + 1);
+                var name = changedBy.Replace($" {username}", string.Empty);
+                return name;
+            }
+
+            return changedBy;
+        }
     }
 }

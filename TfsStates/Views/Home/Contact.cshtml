@@ -2,16 +2,28 @@
     ViewData["Title"] = "Contact";
 }
 <h2>@ViewData["Title"]</h2>
-<h3>@ViewData["Message"]</h3>
+
 
 <address>
-    One Microsoft Way<br />
-    Redmond, WA 98052-6399<br />
-    <abbr title="Phone">P:</abbr>
-    425.555.0100
+    <strong>Support:</strong> <a id="contactLink" href="javascript:;">https://geoffhudik.com/contact/</a><br />
+    <strong>Source and Contributions:</strong> <a id="sourceLink" href="javascript:;">https://github.com/thnk2wn/TfsStates</a>
 </address>
 
-<address>
-    <strong>Support:</strong> <a href="mailto:Support@example.com">Support@example.com</a><br />
-    <strong>Marketing:</strong> <a href="mailto:Marketing@example.com">Marketing@example.com</a>
-</address>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+
+    <script type="text/javascript">
+        $(function () {
+            const { ipcRenderer } = require("electron");
+
+            $('#contactLink').click(function () {
+                ipcRenderer.send("link-contact");
+            });
+
+            $('#sourceLink').click(function () {
+                ipcRenderer.send("link-source");
+            });
+        });
+    </script>
+}
