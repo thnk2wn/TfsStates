@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
+using Microsoft.VisualStudio.Services.WebApi;
 
 namespace TfsStates.Extensions.Tfs
 {
@@ -23,6 +24,14 @@ namespace TfsStates.Extensions.Tfs
             }
 
             return null;
+        }
+
+        public static IdentityRef GetFieldIdentity(this WorkItem workItem, string field)
+        {
+            var value = workItem.Fields.ContainsKey(field)
+                ? workItem.Fields[field] as IdentityRef
+                : null;
+            return value;
         }
 
         public static string State(this WorkItem workItem)
@@ -87,7 +96,10 @@ namespace TfsStates.Extensions.Tfs
 
         public static string ChangedBy(this WorkItem workItem)
         {
-            return workItem.GetFieldValue("System.ChangedBy");
+            const string key = "System.ChangedBy";
+            var identity = workItem.GetFieldIdentity(key);
+            var name = identity?.DisplayName ?? workItem.GetFieldValue(key);
+            return name;
         }
 
         public static string ChangedByNameOnly(this WorkItem workItem)

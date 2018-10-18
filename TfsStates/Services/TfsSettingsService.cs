@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.TeamFoundation.Core.WebApi;
@@ -36,6 +37,11 @@ namespace TfsStates.Services
                     model.Password = EncryptionService.DecryptString(model.Password, EncryptionSettings.Key);
                 }
 
+                if (string.IsNullOrEmpty(model.ConnectionType))
+                {
+                    model.ConnectionType = TfsConnectionTypes.Default;
+                }
+
                 return model;
             }
 
@@ -47,7 +53,9 @@ namespace TfsStates.Services
             var model = (await GetSettings())
                 ?? new TfsConnectionModel
                 {
-                    UseWindowsIdentity = true
+                    UseWindowsIdentity = true,
+                    ConnectionTypes = TfsConnectionTypes.Items,
+                    ConnectionType = TfsConnectionTypes.Default
                 };
             return model;
         }

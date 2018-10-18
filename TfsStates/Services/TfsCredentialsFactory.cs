@@ -11,11 +11,21 @@ namespace TfsStates.Services
         // https://stackoverflow.com/questions/46719764/cant-access-my-repos-in-vsts-using-rest-api
         public static VssCredentials Create(TfsConnectionModel model)
         {
-            var creds = model.UseWindowsIdentity 
-                ? new VssCredentials(true)
-                : new VssCredentials(
-                    new WindowsCredential(
-                        new NetworkCredential(model.Username, model.Password)));
+            VssCredentials creds = null;
+
+            if (model.ConnectionType == TfsConnectionTypes.TeamFoundationServer)
+            {
+                creds = model.UseWindowsIdentity
+                    ? new VssCredentials(true)
+                    : new VssCredentials(
+                        new WindowsCredential(
+                            new NetworkCredential(model.Username, model.Password)));
+            }
+            else if (model.ConnectionType == TfsConnectionTypes.AzureDevOps)
+            {
+                creds = new VssBasicCredential(string.Empty, model.PersonalAccessToken);
+            }
+
             return creds;
         }
     }

@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using ElectronNET.API;
 using Microsoft.AspNetCore.Mvc;
 using TfsStates.Models;
 using TfsStates.Services;
@@ -21,6 +22,9 @@ namespace TfsStates.Controllers
 
         public async Task<IActionResult> Index()
         {
+            RegisterOpenWebLink(
+                "azure-devops-pat-docs", 
+                "https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=vsts");
             var model = await this.settingsService.GetSettingsOrDefault();
             return View(ViewName, model);
         }
@@ -32,6 +36,16 @@ namespace TfsStates.Controllers
             TfsConnectionModel model
         )
         {
+            model.ConnectionTypes = TfsConnectionTypes.Items;
+
+            if (model.ConnectionType == TfsConnectionTypes.AzureDevOps 
+                && string.IsNullOrEmpty(model.PersonalAccessToken))
+            {
+                ModelState.AddModelError(
+                    nameof(model.PersonalAccessToken), 
+                    "Personal Access Token is required");
+            }
+
             if (!ModelState.IsValid)
             {
                 return View(ViewName, model);
@@ -48,6 +62,17 @@ namespace TfsStates.Controllers
             }
 
             return View(ViewName, model);
+        }
+
+        private void RegisterOpenWebLink(string channel, string url)
+        {
+            if (HybridSupport.IsElectronActive)
+            {
+                Electron.IpcMain.On(channel, async (args) =>
+                {
+                    await Electron.Shell.OpenExternalAsync(url);
+                });
+            }
         }
     }
 }

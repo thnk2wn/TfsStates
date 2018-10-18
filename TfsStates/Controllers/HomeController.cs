@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using ElectronNET.API;
@@ -149,7 +150,12 @@ namespace TfsStates.Controllers
             model.ResultFilename = fName;
             await Electron.Shell.OpenExternalAsync(filename);
 
-            await this.reportHistoryService.Record(model);
+            // eat file in use exception
+            try 
+            { 
+                await this.reportHistoryService.Record(model);
+            }
+            catch (IOException ioEx) { }
 
             var chart = chartService.CreateBarChart(queryResult);
             ViewData["chart"] = chart;

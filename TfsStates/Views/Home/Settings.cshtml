@@ -22,7 +22,30 @@
             }
         }
 
+        function onConnectionTypeChange(type) {
+            var ntlmCredsRow = $('#ntlmUserCredsRow');
+            var ntlmDefaultRow = $('#ntlmDefaultCredsRow');
+            var patRow = $('#personalAccessTokenRow');
+
+            if (type.indexOf('NTLM') > -1) {
+                ntlmCredsRow.show();
+                ntlmDefaultRow.show();
+                patRow.hide();
+            }
+            else {
+                ntlmCredsRow.hide();
+                ntlmDefaultRow.hide();
+                patRow.show();
+            }
+        }
+
         $(function () {
+            const { ipcRenderer } = require("electron");
+
+            $('#azure-devops-pat-docs').click(function () {
+                ipcRenderer.send("azure-devops-pat-docs");
+            });
+
             $("#UseWindowsIdentity").change(function () {
                 onWindowsIdentityChange(this.checked);               
             });
@@ -33,8 +56,12 @@
                 $("#saveAlert").hide();
             });
 
+            $("#ConnectionType").change(function () {
+                onConnectionTypeChange(this.value);
+            });
 
             onWindowsIdentityChange(@Json.Serialize(Model.UseWindowsIdentity));
+            onConnectionTypeChange(@Json.Serialize(Model.ConnectionType));
         });
     </script>
 }
@@ -47,14 +74,25 @@
         <legend>TFS Connection</legend>
 
         <div class="row">
-            <label asp-for="Url" class="col-md-1 control-label"></label>
-            <div class="form-group col-md-11">
+            <label asp-for="Url" class="col-md-2 control-label"></label>
+            <div class="form-group col-md-10">
                 <input asp-for="Url" class="form-control" placeholder="http://server:8080/tfs/DefaultCollection" />
                 <span asp-validation-for="Url" class="text-danger"></span>
             </div>
         </div>
 
         <div class="row">
+            <label asp-for="ConnectionType" class="col-md-2 control-label"></label>
+
+            <div class="form-group col-md-10">
+                <select 
+                    asp-for="ConnectionType" 
+                    asp-items="@(new SelectList(Model.ConnectionTypes))">
+                </select>
+            </div>
+        </div>
+
+        <div class="row" id="ntlmDefaultCredsRow">
             <div class="col-md-12">
                 <div class="checkbox">
                     <label asp-for="UseWindowsIdentity">
@@ -65,7 +103,7 @@
             </div>
         </div>
 
-        <div class="row">
+        <div class="row" id="ntlmUserCredsRow">
             <label asp-for="Username" class="col-md-1 control-label"></label>
             <div class="form-group col-md-5">
                 <input asp-for="Username" class="form-control" />
@@ -76,6 +114,18 @@
             <div class="form-group col-md-5">
                 <input asp-for="Password" class="form-control" value="@Model.Password" />
                 <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="row" id="personalAccessTokenRow" style="display: none;">
+            <label asp-for="PersonalAccessToken" class="col-md-2 control-label"></label>
+            <div class="form-group col-md-10">
+                <input asp-for="PersonalAccessToken" class="form-control" />
+                <span asp-validation-for="PersonalAccessToken" class="text-danger"></span>
+                <div>
+                    <a id="azure-devops-pat-docs" href="javascript:;">Instructions</a>
+                    <small>(only Read Work Items needed)</small>
+                </div>
             </div>
         </div>
     </fieldset>

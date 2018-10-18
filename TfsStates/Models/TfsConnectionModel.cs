@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace TfsStates.Models
 {
@@ -7,6 +9,7 @@ namespace TfsStates.Models
         [Required]
         public string Url { get; set; }
 
+        [DisplayName("Use Windows Identity")]
         public bool UseWindowsIdentity { get; set; }
 
         public string Username { get; set; }
@@ -15,6 +18,15 @@ namespace TfsStates.Models
         public string Password { get; set; }
 
         public TfsConnectionValidationResult ValidationResult { get; set; }
+
+        [Required]
+        [DisplayName("Connection Type")]
+        public string ConnectionType { get; set; }
+
+        public List<string> ConnectionTypes { get; set; }
+
+        [DisplayName("Personal Access Token")]
+        public string PersonalAccessToken { get; set; }
 
         public bool IsSet()
         {
