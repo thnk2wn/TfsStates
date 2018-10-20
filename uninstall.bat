@@ -15,4 +15,4 @@ if exist %dataDir% echo Removing %dataDir% & rd /q /s %dataDir%
 if exist %shortcut% echo Removing %shortcut% & del /f %shortcut%
 
 echo Done, press Enter to exit
-prompt
+pause
