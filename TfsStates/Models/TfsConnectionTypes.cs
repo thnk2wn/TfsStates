@@ -12,8 +12,8 @@ namespace TfsStates.Models
 
         public static List<string> Items = new List<string>
         {
-            { TfsConnectionTypes.TeamFoundationServer },
-            { TfsConnectionTypes.AzureDevOps }
+            { AzureDevOps },
+            { TeamFoundationServer }           
         };
     }
 }

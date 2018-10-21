@@ -1,1 +1,27 @@
- { "appId":"com.TfsStates.app", "productName":"TfsStates", "asar":false, "win":{ "target":[ { "target":"nsis", "arch":[ "x64" ] } ] }, "linux":{ "target":[ { "target":"deb", "arch":[ "x64" ] } ], "synopsis":"TFS States", "description":"TFS States" } } 
+{
+  "appId": "com.TfsStates.app",
+  "productName": "TfsStates",
+  "asar": false,
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      }
+    ]
+  },
+  "linux": {
+    "target": [
+      {
+        "target": "deb",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "synopsis": "TFS States",
+    "description": "TFS States"
+  }
+}

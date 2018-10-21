@@ -23,8 +23,8 @@ namespace TfsStates.Controllers
         public async Task<IActionResult> Index()
         {
             RegisterOpenWebLink(
-                "azure-devops-pat-docs", 
-                "https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=vsts");
+                "azure-devops-pat-docs",
+                "https://github.com/thnk2wn/TfsStates/wiki/Authenticating-with-Azure-DevOps");
             var model = await this.settingsService.GetSettingsOrDefault();
             return View(ViewName, model);
         }
