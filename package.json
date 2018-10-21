@@ -1,0 +1,22 @@
+{
+ "name": "TfsStates",
+ "license": "MIT",
+ "version": "1.0.1",
+ "description": "TFS State transition utility",
+ "main": "./TfsStates/obj/Host/main.js",
+ "scripts": {},
+ "keywords": [],
+ "author": {
+  "name": "Geoff Hudik",
+  "email": "thnk2wn2@gmail.com"
+ },
+ "homepage": "https://github.com/thnk2wn/TfsStates",
+ "dependencies": {
+  "detect-port": "1.2.1",
+  "socket.io": "2.0.3"
+ },
+ "devDependencies": {
+  "@types/electron": "1.6.10",
+  "@types/socket.io": "1.4.31"
+ }
+}
