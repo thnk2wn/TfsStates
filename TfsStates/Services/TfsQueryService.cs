@@ -37,6 +37,7 @@ namespace TfsStates.Services
             var sw = Stopwatch.StartNew();
             var connection = await this.tfsSettingsService.GetConnection();
             if (connection == null) throw new InvalidOperationException("no connection");
+            connection.Settings.SendTimeout = TimeSpan.FromSeconds(AppSettings.DefaultTimeoutSeconds);
 
             this.workItemClient = connection.GetClient<WorkItemTrackingHttpClient>();
             var wiql = TfsQueryBuilder.BuildQuery(model);

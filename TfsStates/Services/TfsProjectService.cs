@@ -25,6 +25,7 @@ namespace TfsStates.Services
         {
             var connection = await this.tfsSettingsService.GetConnection();
             if (connection == null) return null;
+            connection.Settings.SendTimeout = TimeSpan.FromSeconds(AppSettings.DefaultTimeoutSeconds);
 
             var projectClient = connection.GetClient<ProjectHttpClient>();
             var states = ProjectState.Unchanged | ProjectState.WellFormed;
@@ -41,7 +42,8 @@ namespace TfsStates.Services
         {
             var connection = await this.tfsSettingsService.GetConnection();
             if (connection == null) return null;
-            
+            connection.Settings.SendTimeout = TimeSpan.FromSeconds(AppSettings.DefaultTimeoutSeconds);
+
             var client = connection.GetClient<WorkItemTrackingHttpClient>();
 
             var rootIterationNode = await client.GetClassificationNodeAsync(

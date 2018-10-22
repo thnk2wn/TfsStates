@@ -116,8 +116,10 @@ namespace TfsStates.Services
                 var uri = new Uri(model.Url);
                 var creds = TfsCredentialsFactory.Create(model);
                 var connection = new VssConnection(uri, creds);
+                connection.Settings.SendTimeout = TimeSpan.FromSeconds(AppSettings.DefaultTimeoutSeconds);
 
                 var projectClient = connection.GetClient<ProjectHttpClient>();
+
                 var projects = await projectClient.GetProjects(ProjectState.All, top: 1);
 
                 if (projects.Count == 0)
