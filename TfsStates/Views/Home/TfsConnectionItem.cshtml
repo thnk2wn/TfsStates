@@ -1,73 +1,38 @@
-﻿
-@model TfsStates.ViewModels.TfsConnectionItemViewModel
-
-@{
-    ViewData["Title"] = "Settings";
+﻿@{
+    Layout = null;
 }
 
+@model TfsStates.ViewModels.TfsConnectionItemViewModel
+
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
-
     <script type="text/javascript">
-        function onWindowsIdentityChange(checked) {
-            var username = $("#Username");
-            var password = $("#Password");
-
-            username.prop('disabled', checked);
-            password.prop('disabled', checked);
-
-            if (checked) {
-                username.val('');
-                password.val('');
-            }
-        }
-
-        function onConnectionTypeChange(type) {
-            var ntlmCredsRow = $('#ntlmUserCredsRow');
-            var ntlmDefaultRow = $('#ntlmDefaultCredsRow');
-            var patRow = $('#personalAccessTokenRow');
-
-            if (type.indexOf('NTLM') > -1) {
-                ntlmCredsRow.show();
-                ntlmDefaultRow.show();
-                patRow.hide();
-            }
-            else {
-                ntlmCredsRow.hide();
-                ntlmDefaultRow.hide();
-                patRow.show();
-            }
-        }
+        
 
         $(function () {
-            const { ipcRenderer } = require("electron");
+            console.log('ready');
 
-            $('#azure-devops-pat-docs').click(function () {
-                ipcRenderer.send("azure-devops-pat-docs");
-            });
-
-            $("#UseWindowsIdentity").change(function () {
+            $(".use-default-credentials").change(function () {
                 onWindowsIdentityChange(this.checked);
             });
 
-            $("#settingsForm").submit(function (event) {
+            $(".settingsForm").submit(function (event) {
                 $("#saveButton").prop('disabled', true);
                 $("#SavingLabel").text('Saving and testing connection, please wait...');
                 $("#saveAlert").hide();
             });
 
-            $("#ConnectionType").change(function () {
-                onConnectionTypeChange(this.value);
-            });
-
             onWindowsIdentityChange(@Json.Serialize(Model.UseDefaultCredentials));
-            onConnectionTypeChange(@Json.Serialize(Model.ConnectionType));
         });
     </script>
 }
 
 <div class="row">
-    <form asp-antiforgery="true" asp-controller="Settings" asp-action="UpdateConnection" id="settingsForm">
+    <form asp-antiforgery="true"
+          asp-controller="Settings"
+          asp-action="UpdateConnection"
+          class="connectionForm"
+          id="connectionForm_@Model.Id"
+          data-id="@Model.Id">
         <hr style="border-color: black" />
         <div asp-validation-summary="All" class="text-danger"></div>
         <fieldset>
@@ -76,7 +41,11 @@
 
                 <div class="form-group col-md-10">
                     <select asp-for="ConnectionType"
-                            asp-items="@(new SelectList(Model.ConnectionTypes))"></select>
+                            asp-items="@(new SelectList(Model.ConnectionTypes))"
+                            class="connection-type"
+                            onchange="onConnectionTypeChange(this)">
+    
+                </select>
                 </div>
             </div>
 
@@ -88,18 +57,18 @@
                 </div>
             </div>
 
-            <div class="row" id="ntlmDefaultCredsRow">
+            <div class="row default-creds-row">
                 <div class="col-md-12">
                     <div class="checkbox">
                         <label asp-for="UseDefaultCredentials">
-                            <input asp-for="UseDefaultCredentials" type="checkbox" />
+                            <input asp-for="UseDefaultCredentials" type="checkbox" class="use-default-credentials" />
                             Use Default Credentials
                         </label>
                     </div>
                 </div>
             </div>
 
-            <div class="row" id="ntlmUserCredsRow">
+            <div class="row user-creds-row">
                 <label asp-for="Username" class="col-md-1 control-label"></label>
                 <div class="form-group col-md-5">
                     <input asp-for="Username" class="form-control" />
@@ -113,13 +82,13 @@
                 </div>
             </div>
 
-            <div class="row" id="personalAccessTokenRow" style="display: none;">
+            <div class="row token-row" style="display: none;">
                 <label asp-for="PersonalAccessToken" class="col-md-2 control-label"></label>
                 <div class="form-group col-md-10">
                     <input asp-for="PersonalAccessToken" class="form-control" />
                     <span asp-validation-for="PersonalAccessToken" class="text-danger"></span>
                     <div>
-                        <a id="azure-devops-pat-docs" href="javascript:;">Instructions</a>
+                        <a class="azure-devops-pat-docs" href="javascript:;">Instructions</a>
                         <small>(only Read Work Items needed)</small>
                     </div>
                 </div>
@@ -135,8 +104,8 @@
         <div id="SavingLabel" style="margin-left: 10px;"></div>
 
         @if (Model.ValidationResult != null
-         && !Model.ValidationResult.IsError
-         && !string.IsNullOrEmpty(Model.ValidationResult.Message))
+        && !Model.ValidationResult.IsError
+        && !string.IsNullOrEmpty(Model.ValidationResult.Message))
         {
             <div class="alert alert-success alert-dismissible tfs-settings-validate-success" role="alert" id="saveAlert">
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>

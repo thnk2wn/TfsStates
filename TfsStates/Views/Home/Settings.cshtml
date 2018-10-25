@@ -8,12 +8,30 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 
+    <environment include="Development">
+        <script src="~/js/tfs-connection-item.js"></script>
+    </environment>
+    <environment exclude="Development">
+        <script src="~/js/tfs-connection-item.js"></script>
+    </environment>
+
     <script type="text/javascript">
+        $(function () {
+            const { ipcRenderer } = require("electron");
+
+            $('.azure-devops-pat-docs').click(function () {
+                ipcRenderer.send("azure-devops-pat-docs");
+            });
+        });
+
         $("#newConnectionButton").on("click", function () {
             var url = '@Url.Action("NewConnection", "Settings")';
 
             $.get(url, function (partialView) {
-                $('#connectionsTable> tbody:last-child').append(partialView);
+                var $appended = $('#connectionsTable> tbody:last-child').append(partialView);
+                var $form = $appended.find('form');
+                var $connType = $form.find('.connection-type');
+                onConnectionTypeChange($connType[0]);
             })
             .fail(function () {
                 // TODO: on page alert for New error

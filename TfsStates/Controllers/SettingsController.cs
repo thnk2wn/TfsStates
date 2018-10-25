@@ -42,7 +42,7 @@ namespace TfsStates.Controllers
                 ConnectionTypes = TfsConnectionTypes.Items
             };
 
-            return View(ConnectionItemViewName, model);
+            return PartialView(ConnectionItemViewName, model);
         }
 
         public async Task<IActionResult> SaveConnection(TfsConnectionItemViewModel viewModel)
@@ -86,7 +86,7 @@ namespace TfsStates.Controllers
                 await this.reportHistoryService.Clear();
             }
 
-            return View(ConnectionItemViewName, viewModel);
+            return PartialView(ConnectionItemViewName, viewModel);
         }
 
         private void RegisterOpenWebLink(string channel, string url)
