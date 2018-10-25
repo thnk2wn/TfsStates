@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
-using Microsoft.VisualStudio.Services.WebApi;
+using TfsStates.Extensions;
 
 namespace TfsStates.Services
 {
@@ -19,15 +19,13 @@ namespace TfsStates.Services
         }
 
         // TODO: Consider caching such as https://github.com/alastairtree/LazyCache?WT.mc_id=-blog-scottha
-        // https://www.hanselman.com/blog/UsingLazyCacheForCleanAndSimpleNETCoreInmemoryCaching.aspx
-        // consider to a file as well as memory
         public async Task<List<string>> GetProjectNames()
         {
-            var connection = await this.tfsSettingsService.GetConnection();
-            if (connection == null) return null;
-            connection.Settings.SendTimeout = TimeSpan.FromSeconds(AppSettings.DefaultTimeoutSeconds);
+            var vssConnection = await this.tfsSettingsService.GetActiveVssConnection();
+            if (vssConnection == null) return null;
+            vssConnection.Settings.SendTimeout = TimeSpan.FromSeconds(AppSettings.DefaultTimeoutSeconds);
 
-            var projectClient = connection.GetClient<ProjectHttpClient>();
+            var projectClient = vssConnection.GetClient<ProjectHttpClient>();
             var states = ProjectState.Unchanged | ProjectState.WellFormed;
             var projects = await projectClient.GetProjects(states, top: 200);
 
@@ -40,11 +38,11 @@ namespace TfsStates.Services
 
         public async Task<List<string>> GetIterations(string projectName)
         {
-            var connection = await this.tfsSettingsService.GetConnection();
-            if (connection == null) return null;
-            connection.Settings.SendTimeout = TimeSpan.FromSeconds(AppSettings.DefaultTimeoutSeconds);
+            var vssConnection = await this.tfsSettingsService.GetActiveVssConnection();
+            if (vssConnection == null) return null;
+            vssConnection.Settings.SendTimeout = TimeSpan.FromSeconds(AppSettings.DefaultTimeoutSeconds);
 
-            var client = connection.GetClient<WorkItemTrackingHttpClient>();
+            var client = vssConnection.GetClient<WorkItemTrackingHttpClient>();
 
             var rootIterationNode = await client.GetClassificationNodeAsync(
                 projectName,

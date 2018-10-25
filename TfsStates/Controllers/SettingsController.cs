@@ -1,14 +1,18 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using ElectronNET.API;
 using Microsoft.AspNetCore.Mvc;
+using TfsStates.Extensions;
 using TfsStates.Models;
 using TfsStates.Services;
+using TfsStates.ViewModels;
 
 namespace TfsStates.Controllers
 {
     public class SettingsController : Controller
     {
         private const string ViewName = "~/Views/Home/Settings.cshtml";
+        private const string ConnectionItemViewName = "~/Views/Home/TfsConnectionItem.cshtml";
         private readonly ITfsSettingsService settingsService;
         private readonly IReportHistoryService reportHistoryService;
 
@@ -25,43 +29,64 @@ namespace TfsStates.Controllers
             RegisterOpenWebLink(
                 "azure-devops-pat-docs",
                 "https://github.com/thnk2wn/TfsStates/wiki/Authenticating-with-Azure-DevOps");
-            var model = await this.settingsService.GetSettingsOrDefault();
-            return View(ViewName, model);
+            var viewModel = (await this.settingsService.GetConnectionsOrDefault())
+                .ToViewModel();
+            return View(ViewName, viewModel);
+        }
+        
+        public IActionResult NewConnection()
+        {
+            var model = new TfsConnectionItemViewModel 
+            {
+                Id = Guid.NewGuid(),
+                ConnectionTypes = TfsConnectionTypes.Items
+            };
+
+            return View(ConnectionItemViewName, model);
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveConnection(
-            [FromForm]
-            TfsConnectionModel model
-        )
+        public async Task<IActionResult> SaveConnection(TfsConnectionItemViewModel viewModel)
         {
-            model.ConnectionTypes = TfsConnectionTypes.Items;
+            // TODO: validate
 
-            if (model.ConnectionType == TfsConnectionTypes.AzureDevOps 
-                && string.IsNullOrEmpty(model.PersonalAccessToken))
+            viewModel.ConnectionTypes = TfsConnectionTypes.Items;
+
+            if (viewModel.ConnectionType == TfsConnectionTypes.AzureDevOpsToken
+                && string.IsNullOrEmpty(viewModel.PersonalAccessToken))
             {
                 ModelState.AddModelError(
-                    nameof(model.PersonalAccessToken), 
+                    nameof(viewModel.PersonalAccessToken),
                     "Personal Access Token is required");
             }
 
             if (!ModelState.IsValid)
             {
-                return View(ViewName, model);
+                return View(ViewName, viewModel);
             }
 
-            model = await this.settingsService.Save(model, validate: true);
+            var knownConn = viewModel.ToKnownConnection();
+            viewModel.ValidationResult = await this.settingsService.Validate(knownConn);
 
-            if (model.ValidationResult.IsError) { 
-                ModelState.AddModelError(string.Empty, model.ValidationResult.Message);
+            if (!viewModel.ValidationResult.IsError) 
+            {
+                await this.settingsService.Save(knownConn);
+                await this.reportHistoryService.Clear();
+            }
+            else
+            {
+                ModelState.AddModelError(string.Empty, viewModel.ValidationResult.Message);
+            }
+
+            if (viewModel.ValidationResult.IsError)
+            {
+                ModelState.AddModelError(string.Empty, viewModel.ValidationResult.Message);
             }
             else
             {
                 await this.reportHistoryService.Clear();
             }
 
-            return View(ViewName, model);
+            return View(ConnectionItemViewName, viewModel);
         }
 
         private void RegisterOpenWebLink(string channel, string url)

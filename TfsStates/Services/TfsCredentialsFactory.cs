@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using Microsoft.VisualStudio.Services.Client;
 using Microsoft.VisualStudio.Services.Common;
 using TfsStates.Models;
 
@@ -6,24 +7,27 @@ namespace TfsStates.Services
 {
     public static class TfsCredentialsFactory
     {
-        // TODO: Add support for OAuth and/or personal access token for Azure DevOps with changes to settings view
         // https://docs.microsoft.com/en-us/azure/devops/integrate/get-started/client-libraries/samples?view=vsts
         // https://stackoverflow.com/questions/46719764/cant-access-my-repos-in-vsts-using-rest-api
-        public static VssCredentials Create(TfsConnectionModel model)
+        public static VssCredentials Create(TfsKnownConnection connection)
         {
             VssCredentials creds = null;
 
-            if (model.ConnectionType == TfsConnectionTypes.TeamFoundationServer)
+            //new VssAadCredential()
+
+            //new NetworkCredential()
+
+            if (connection.ConnectionType == TfsConnectionTypes.TfsNTLM)
             {
-                creds = model.UseWindowsIdentity
+                creds = connection.UseDefaultCredentials
                     ? new VssCredentials(true)
                     : new VssCredentials(
                         new WindowsCredential(
-                            new NetworkCredential(model.Username, model.Password)));
+                            new NetworkCredential(connection.Username, connection.Password)));
             }
-            else if (model.ConnectionType == TfsConnectionTypes.AzureDevOps)
+            else if (connection.ConnectionType == TfsConnectionTypes.AzureDevOpsToken)
             {
-                creds = new VssBasicCredential(string.Empty, model.PersonalAccessToken);
+                creds = new VssBasicCredential(string.Empty, connection.PersonalAccessToken);
             }
 
             return creds;

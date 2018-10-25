@@ -1,11 +1,12 @@
 ﻿using System;
 using TfsStates.Models;
+using TfsStates.ViewModels;
 
 namespace TfsStates.Services
 {
     public static class TfsQueryBuilder
     {
-        public static string BuildQuery(TfsStatesModel model)
+        public static string BuildQuery(TfsStatesViewModel model)
         {
             // TODO: Make work item type configurable
             var wiql = @"

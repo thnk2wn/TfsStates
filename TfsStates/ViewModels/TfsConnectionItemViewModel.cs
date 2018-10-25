@@ -1,16 +1,20 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using TfsStates.Models;
 
-namespace TfsStates.Models
+namespace TfsStates.ViewModels
 {
-    public class TfsConnectionModel
+    public class TfsConnectionItemViewModel
     {
+        public Guid Id { get; set; }
+
         [Required]
         public string Url { get; set; }
 
-        [DisplayName("Use Windows Identity")]
-        public bool UseWindowsIdentity { get; set; }
+        [DisplayName("Use Default Credentials")]
+        public bool UseDefaultCredentials { get; set; }
 
         public string Username { get; set; }
 
@@ -31,7 +35,7 @@ namespace TfsStates.Models
         public bool IsSet()
         {
             return !string.IsNullOrEmpty(Url)
-                && (UseWindowsIdentity || (!string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Password)));
+                && (UseDefaultCredentials || (!string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Password)));
         }
     }
 }

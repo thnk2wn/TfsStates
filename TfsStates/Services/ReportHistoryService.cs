@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using TfsStates.Models;
@@ -7,14 +8,15 @@ namespace TfsStates.Services
 {
     public class ReportHistoryService : IReportHistoryService
     {
-        public async Task Record(TfsStatesModel model)
+        public async Task Record(Guid knownConnId, string project, string iteration)
         {
             var filename = await GetFilename();
 
             var run = new ReportRun
             {
-                Project = model.Project,
-                Iteration = model.Iteration
+                ConnectionId = knownConnId,
+                Project = project,
+                Iteration = iteration,
             };
 
             var json = JsonConvert.SerializeObject(run);

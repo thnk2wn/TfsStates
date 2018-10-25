@@ -9,6 +9,7 @@ using Humanizer;
 using Microsoft.AspNetCore.Mvc;
 using TfsStates.Models;
 using TfsStates.Services;
+using TfsStates.ViewModels;
 
 namespace TfsStates.Controllers
 {
@@ -46,25 +47,13 @@ namespace TfsStates.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var model = new TfsStatesModel();
+            var model = new TfsStatesViewModel();
             await LoadLookups(model);
 
             if (string.IsNullOrEmpty(model.RunReadyState.Message))
             {
                 model.RunReadyState.IsReady = true;
             }
-
-            /*
-            var testChartFilename = await FileUtility.GetFilename("_test-chart-data.json");
-
-            if (System.IO.File.Exists(testChartFilename))
-            {
-                var json = await System.IO.File.ReadAllTextAsync(testChartFilename);
-                var data = JsonConvert.DeserializeObject<TfsQueryResult>(json);
-                var chart = chartService.CreateBarChart(data);
-                ViewData["chart"] = chart;
-            }
-            */
 
             return View(model);
         }
@@ -93,25 +82,25 @@ namespace TfsStates.Controllers
             return iterations;
         }
 
-        public async Task<IActionResult> RunReport(TfsStatesModel model)
+        public async Task<IActionResult> RunReport(TfsStatesViewModel viewModel)
         {
-            if (string.IsNullOrEmpty(model.Project) || model.Project == NoProjectSelected)
+            if (string.IsNullOrEmpty(viewModel.Project) || viewModel.Project == NoProjectSelected)
             {
-                ModelState.AddModelError(nameof(model.Project), "Project is required");
+                ModelState.AddModelError(nameof(viewModel.Project), "Project is required");
             }
 
-            if (string.IsNullOrEmpty(model.Iteration) || model.Iteration == NoIterationSelected)
+            if (string.IsNullOrEmpty(viewModel.Iteration) || viewModel.Iteration == NoIterationSelected)
             {
                 ModelState.AddModelError(
-                    nameof(model.Iteration), 
+                    nameof(viewModel.Iteration), 
                     "Iteration Under is required (you can select a parent iteration container)");
             }
 
-            await LoadLookups(model);
+            await LoadLookups(viewModel);
 
             if (!ModelState.IsValid) 
             { 
-                return View(ViewName, model);
+                return View(ViewName, viewModel);
             }
 
             var sw = Stopwatch.StartNew();
@@ -121,17 +110,17 @@ namespace TfsStates.Controllers
 
             try 
             { 
-                SendProgress($"Querying project {model.Project}, iteration under {model.Iteration}...");
-                queryResult = await this.tfsQueryService.Query(model);
+                SendProgress($"Querying project {viewModel.Project}, iteration under {viewModel.Iteration}...");
+                queryResult = await this.tfsQueryService.Query(viewModel);
             }
             catch (Exception ex)
             {
                 Trace.WriteLine(ex);
                 var settingsUrl = Url.Action("Index", "Settings");
-                model.RunReadyState.NotReady(
+                viewModel.RunReadyState.NotReady(
                     $"Error querying TFS. Verify <a href='{settingsUrl}'>TFS settings</a> " +
                     $"and your connectivity and try again.");
-                return View(ViewName, model);
+                return View(ViewName, viewModel);
             }
 
             // var json = JsonConvert.SerializeObject(queryResult);
@@ -140,20 +129,20 @@ namespace TfsStates.Controllers
             var filename = await FileUtility.GetFilename(fName);
             SendProgress($"Writing {filename}...");
 
-            var settings = await this.settingsService.GetSettings();
-            var projectUrl = $"{settings.Url}/{model.Project}";
+            var knownConn = await this.settingsService.GetActiveConnection();
+            var projectUrl = $"{knownConn.Url}/{viewModel.Project}";
             this.excelWriterService.Write(filename, queryResult.TfsItems, projectUrl);
 
             SendProgress($"Launching {filename}...");
             System.Threading.Thread.Sleep(1000);
 
-            model.ResultFilename = fName;
+            viewModel.ResultFilename = fName;
             await Electron.Shell.OpenExternalAsync(filename);
 
             // eat file in use exception
             try 
             { 
-                await this.reportHistoryService.Record(model);
+                await this.reportHistoryService.Record(knownConn.Id, viewModel.Project, viewModel.Iteration);
             }
             catch (IOException ioEx) { }
 
@@ -164,7 +153,7 @@ namespace TfsStates.Controllers
             var totalTransitions = queryResult.TfsItems.Sum(x => x.TransitionCount);
             var avgTransitions = Math.Round(queryResult.TfsItems.Average(x => x.TransitionCount), 0);
 
-            model.FinalProgress = new ReportProgress
+            viewModel.FinalProgress = new ReportProgress
             {
                 WorkItemsProcessed = queryResult.TotalWorkItems,
                 Message = $"Processed {"work item".ToQuantity(queryResult.TotalWorkItems, "###,##0")} and " +
@@ -173,7 +162,7 @@ namespace TfsStates.Controllers
                     $"Average work item transitions: {avgTransitions}"
             };
 
-            return View(ViewName, model);
+            return View(ViewName, viewModel);
         }
 
         [Route("/home/viewreport/{name}")]
@@ -195,9 +184,9 @@ namespace TfsStates.Controllers
             }
         }
 
-        private async Task LoadLookups(TfsStatesModel model)
+        private async Task LoadLookups(TfsStatesViewModel model)
         {
-            model = model ?? new TfsStatesModel();
+            model = model ?? new TfsStatesViewModel();
 
             if (model.Projects?.Any() ?? false) return;
 
@@ -206,21 +195,24 @@ namespace TfsStates.Controllers
 
             try
             {
-                var settings = await settingsService.GetSettings();
+                var connections = await settingsService.GetConnections();
+                var activeConnection = connections?.GetActiveConnection();
 
-                if (settings == null)
+                if (connections == null)
                 {
                     model.RunReadyState.NotReady(
                         $"<a href='{settingsUrl}'>TFS settings</a> need to first be supplied.");
                 }
-                else
+                else if (activeConnection == null)
                 {
-                    if (!settings.IsSet())
-                    {
-                        model.RunReadyState.NotReady(
-                            $"Some <a href='{settingsUrl}'>TFS settings</a> are missing and " +
-                            $"must first be supplied.");
-                    }
+                    model.RunReadyState.NotReady(
+                        $"No active connection. Check <a href='{settingsUrl}'>TFS settings</a>.");
+                }
+                else if (!activeConnection.IsSet())
+                {
+                    model.RunReadyState.NotReady(
+                        $"Some <a href='{settingsUrl}'>TFS settings</a> are missing and " +
+                        $"must first be supplied.");
                 }
             }
             catch (Exception ex)
@@ -231,7 +223,7 @@ namespace TfsStates.Controllers
                         $"Adjust settings and try again.");
             }            
 
-            if (model.RunReadyState.State == TfsStatesModel.RunStates.NotReady) return;
+            if (model.RunReadyState.State == TfsStatesViewModel.RunStates.NotReady) return;
 
             try
             {
@@ -256,7 +248,7 @@ namespace TfsStates.Controllers
                     $"and your connectivity and try again.");
             }
 
-            if (model.RunReadyState.State == TfsStatesModel.RunStates.NotReady) return;
+            if (model.RunReadyState.State == TfsStatesViewModel.RunStates.NotReady) return;
 
             var lastReportRun = await this.reportHistoryService.GetLastRunSettings();
 

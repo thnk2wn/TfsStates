@@ -9,8 +9,10 @@ using System.Threading.Tasks.Dataflow;
 using Humanizer;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
+using TfsStates.Extensions;
 using TfsStates.Extensions.Tfs;
 using TfsStates.Models;
+using TfsStates.ViewModels;
 
 namespace TfsStates.Services
 {
@@ -32,14 +34,14 @@ namespace TfsStates.Services
             this.broadcastService = broadCastService;
         }
 
-        public async Task<TfsQueryResult> Query(TfsStatesModel model)
+        public async Task<TfsQueryResult> Query(TfsStatesViewModel model)
         {
             var sw = Stopwatch.StartNew();
-            var connection = await this.tfsSettingsService.GetConnection();
-            if (connection == null) throw new InvalidOperationException("no connection");
-            connection.Settings.SendTimeout = TimeSpan.FromSeconds(AppSettings.DefaultTimeoutSeconds);
+            var vssConnection = await this.tfsSettingsService.GetActiveVssConnection();
+            if (vssConnection == null) throw new InvalidOperationException("no connection");
+            vssConnection.Settings.SendTimeout = TimeSpan.FromSeconds(AppSettings.DefaultTimeoutSeconds);
 
-            this.workItemClient = connection.GetClient<WorkItemTrackingHttpClient>();
+            this.workItemClient = vssConnection.GetClient<WorkItemTrackingHttpClient>();
             var wiql = TfsQueryBuilder.BuildQuery(model);
             var tfsQueryResult = await this.workItemClient.QueryByWiqlAsync(new Wiql { Query = wiql });
 

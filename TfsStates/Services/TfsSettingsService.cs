@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
@@ -13,7 +14,7 @@ namespace TfsStates.Services
     {
         public async Task<string> GetFilename()
         {
-            var filename = await FileUtility.GetFilename("settings.json");
+            var filename = await FileUtility.GetFilename("tfs-settings.json");
             return filename;
         }
 
@@ -23,23 +24,21 @@ namespace TfsStates.Services
             return File.Exists(filename);
         }
 
-        public async Task<TfsConnectionModel> GetSettings()
+        public async Task<TfsKnownConnections> GetConnections()
         {
             var filename = await GetFilename();
 
             if (File.Exists(filename))
             {
                 var json = await File.ReadAllTextAsync(filename);
-                var model = JsonConvert.DeserializeObject<TfsConnectionModel>(json);
+                var model = JsonConvert.DeserializeObject<TfsKnownConnections>(json);
 
-                if (!model.UseWindowsIdentity)
+                foreach (var connection in model.Connections)
                 {
-                    model.Password = EncryptionService.DecryptString(model.Password, EncryptionSettings.Key);
-                }
-
-                if (string.IsNullOrEmpty(model.ConnectionType))
-                {
-                    model.ConnectionType = TfsConnectionTypes.Default;
+                    if (!connection.UseDefaultCredentials)
+                    {
+                        connection.Password = EncryptionService.DecryptString(connection.Password, EncryptionSettings.Key);
+                    }
                 }
 
                 return model;
@@ -48,83 +47,67 @@ namespace TfsStates.Services
             return null;
         }
 
-        public async Task<TfsConnectionModel> GetSettingsOrDefault()
+        public async Task<TfsKnownConnections> GetConnectionsOrDefault()
         {
-            var model = (await GetSettings())
-                ?? new TfsConnectionModel
-                {
-                    UseWindowsIdentity = true,
-                    ConnectionTypes = TfsConnectionTypes.Items,
-                    ConnectionType = TfsConnectionTypes.Default
-                };
+            var model = (await GetConnections())
+                ?? new TfsKnownConnections { Connections = new List<TfsKnownConnection>() };
             return model;
         }
 
-        public async Task<VssConnection> GetConnection()
+        public async Task<TfsKnownConnection> GetActiveConnection()
         {
-            var settings = await this.GetSettings();
-            if (settings == null) return null;
-
-            var creds = TfsCredentialsFactory.Create(settings);
-            var connection = new VssConnection(new Uri(settings.Url), creds);
+            var connections = await GetConnections();
+            var connection = connections?.GetActiveConnection();
             return connection;
         }
 
-        public async Task<TfsConnectionModel> Save(TfsConnectionModel model, bool validate = true)
+        public async Task Save(TfsKnownConnection connection)
         {
             string filename = await GetFilename();
-            var originalPassword = model.Password;
+            var connections = await GetConnectionsOrDefault();
+            var originalPassword = connection.Password;
 
-            if (!model.UseWindowsIdentity)
+            if (!string.IsNullOrEmpty(connection.Password))
+            { 
+                connection.Password = EncryptionService.EncryptString(connection.Password, EncryptionSettings.Key);
+            }
+
+            var existingConnection = connections.Connections.FirstOrDefault(c => c.Id == connection.Id);
+
+            if (existingConnection == null)
             {
-                model.Password = EncryptionService.EncryptString(model.Password, EncryptionSettings.Key);
+                connection.AddedDate = DateTime.Now;
+                connections.Connections.Add(connection);
             }
             else
             {
-                model.Username = string.Empty;
-                model.Password = string.Empty;
+                connection.UpdatedDate = DateTime.Now;
+                var index = connections.Connections.IndexOf(existingConnection);
+                connections.Connections[index] = connection;
             }
 
-            var json = JsonConvert.SerializeObject(model);
+            var json = JsonConvert.SerializeObject(connections, Formatting.Indented);
             await File.WriteAllTextAsync(filename, json);
 
-            if (!model.UseWindowsIdentity)
-            {
-                model.Password = originalPassword;
-            }
-
-            if (validate)
-            {
-                model.ValidationResult = (await Validate(model)).ValidationResult;
-                model.ValidationResult.Message = $"Settings saved. {model.ValidationResult.Message}";
-            }
-            else
-            {
-                model.ValidationResult = new TfsConnectionValidationResult
-                {
-                    Message = "Settings saved."
-                };
-            }
-
-            return model;
+            connection.Password = originalPassword;
         }
 
-        public async Task<TfsConnectionModel> Validate(TfsConnectionModel model)
+        public async Task<TfsConnectionValidationResult> Validate(TfsKnownConnection connection)
         {
             try
             {
-                var uri = new Uri(model.Url);
-                var creds = TfsCredentialsFactory.Create(model);
-                var connection = new VssConnection(uri, creds);
-                connection.Settings.SendTimeout = TimeSpan.FromSeconds(AppSettings.DefaultTimeoutSeconds);
+                var uri = new Uri(connection.Url);
+                var creds = TfsCredentialsFactory.Create(connection);
+                var vssConnection = new VssConnection(uri, creds);
+                vssConnection.Settings.SendTimeout = TimeSpan.FromSeconds(AppSettings.DefaultTimeoutSeconds);
 
-                var projectClient = connection.GetClient<ProjectHttpClient>();
+                var projectClient = vssConnection.GetClient<ProjectHttpClient>();
 
                 var projects = await projectClient.GetProjects(ProjectState.All, top: 1);
 
                 if (projects.Count == 0)
                 {
-                    model.ValidationResult = new TfsConnectionValidationResult
+                    return new TfsConnectionValidationResult
                     {
                         IsError = true,
                         Message = "TFS connection validation test failed. Didn't find any projects."
@@ -133,23 +116,17 @@ namespace TfsStates.Services
             }
             catch (Exception ex)
             {
-                model.ValidationResult = new TfsConnectionValidationResult
+                return new TfsConnectionValidationResult
                 {
                     IsError = true,
                     Message = $"TFS connection validation test failed. {ex.Message}"
                 };
-            }
-            
-           
-            if (model.ValidationResult == null)
-            {
-                model.ValidationResult = new TfsConnectionValidationResult
-                {
-                    Message = "TFS connection validation test successful."
-                };
-            }
+            }            
 
-            return model;
+            return new TfsConnectionValidationResult
+            {
+                Message = "TFS connection validation test successful."
+            };
         }
     }
 }

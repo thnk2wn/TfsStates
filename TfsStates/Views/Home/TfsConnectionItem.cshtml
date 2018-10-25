@@ -1,0 +1,147 @@
+﻿
+@model TfsStates.ViewModels.TfsConnectionItemViewModel
+
+@{
+    ViewData["Title"] = "Settings";
+}
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+
+    <script type="text/javascript">
+        function onWindowsIdentityChange(checked) {
+            var username = $("#Username");
+            var password = $("#Password");
+
+            username.prop('disabled', checked);
+            password.prop('disabled', checked);
+
+            if (checked) {
+                username.val('');
+                password.val('');
+            }
+        }
+
+        function onConnectionTypeChange(type) {
+            var ntlmCredsRow = $('#ntlmUserCredsRow');
+            var ntlmDefaultRow = $('#ntlmDefaultCredsRow');
+            var patRow = $('#personalAccessTokenRow');
+
+            if (type.indexOf('NTLM') > -1) {
+                ntlmCredsRow.show();
+                ntlmDefaultRow.show();
+                patRow.hide();
+            }
+            else {
+                ntlmCredsRow.hide();
+                ntlmDefaultRow.hide();
+                patRow.show();
+            }
+        }
+
+        $(function () {
+            const { ipcRenderer } = require("electron");
+
+            $('#azure-devops-pat-docs').click(function () {
+                ipcRenderer.send("azure-devops-pat-docs");
+            });
+
+            $("#UseWindowsIdentity").change(function () {
+                onWindowsIdentityChange(this.checked);
+            });
+
+            $("#settingsForm").submit(function (event) {
+                $("#saveButton").prop('disabled', true);
+                $("#SavingLabel").text('Saving and testing connection, please wait...');
+                $("#saveAlert").hide();
+            });
+
+            $("#ConnectionType").change(function () {
+                onConnectionTypeChange(this.value);
+            });
+
+            onWindowsIdentityChange(@Json.Serialize(Model.UseDefaultCredentials));
+            onConnectionTypeChange(@Json.Serialize(Model.ConnectionType));
+        });
+    </script>
+}
+
+<div class="row">
+    <form asp-antiforgery="true" asp-controller="Settings" asp-action="UpdateConnection" id="settingsForm">
+        <hr style="border-color: black" />
+        <div asp-validation-summary="All" class="text-danger"></div>
+        <fieldset>
+            <div class="row">
+                <label asp-for="ConnectionType" class="col-md-2 control-label"></label>
+
+                <div class="form-group col-md-10">
+                    <select asp-for="ConnectionType"
+                            asp-items="@(new SelectList(Model.ConnectionTypes))"></select>
+                </div>
+            </div>
+
+            <div class="row">
+                <label asp-for="Url" class="col-md-2 control-label"></label>
+                <div class="form-group col-md-10">
+                    <input asp-for="Url" class="form-control" placeholder="http://server:8080/tfs/DefaultCollection" />
+                    <span asp-validation-for="Url" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row" id="ntlmDefaultCredsRow">
+                <div class="col-md-12">
+                    <div class="checkbox">
+                        <label asp-for="UseDefaultCredentials">
+                            <input asp-for="UseDefaultCredentials" type="checkbox" />
+                            Use Default Credentials
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row" id="ntlmUserCredsRow">
+                <label asp-for="Username" class="col-md-1 control-label"></label>
+                <div class="form-group col-md-5">
+                    <input asp-for="Username" class="form-control" />
+                    <span asp-validation-for="Username" class="text-danger"></span>
+                </div>
+
+                <label asp-for="Password" class="col-md-1 control-label"></label>
+                <div class="form-group col-md-5">
+                    <input asp-for="Password" class="form-control" value="@Model.Password" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row" id="personalAccessTokenRow" style="display: none;">
+                <label asp-for="PersonalAccessToken" class="col-md-2 control-label"></label>
+                <div class="form-group col-md-10">
+                    <input asp-for="PersonalAccessToken" class="form-control" />
+                    <span asp-validation-for="PersonalAccessToken" class="text-danger"></span>
+                    <div>
+                        <a id="azure-devops-pat-docs" href="javascript:;">Instructions</a>
+                        <small>(only Read Work Items needed)</small>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+
+        <input type="submit" class="btn btn-primary" id="saveButton" value="Save" />
+
+        <button type="button" class="btn btn-danger" style="margin-left: 30px;">
+            <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete
+        </button>
+
+        <div id="SavingLabel" style="margin-left: 10px;"></div>
+
+        @if (Model.ValidationResult != null
+         && !Model.ValidationResult.IsError
+         && !string.IsNullOrEmpty(Model.ValidationResult.Message))
+        {
+            <div class="alert alert-success alert-dismissible tfs-settings-validate-success" role="alert" id="saveAlert">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                @Model.ValidationResult.Message
+            </div>
+        }
+    </form>
+</div>

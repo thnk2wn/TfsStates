@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
+using TfsStates.Models;
 
-namespace TfsStates.Models
+namespace TfsStates.ViewModels
 {
-    public class TfsStatesModel
+    public class TfsStatesViewModel
     {
-        public TfsStatesModel()
+        public TfsStatesViewModel()
         {
             this.Projects = new List<string>();
             this.Iterations = new List<string>();

@@ -1,5 +1,5 @@
 ﻿
-@model TfsConnectionModel
+@model TfsStates.ViewModels.TfsConnectionViewModel
 
 @{
     ViewData["Title"] = "Settings";
@@ -9,136 +9,34 @@
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 
     <script type="text/javascript">
-        function onWindowsIdentityChange(checked) {
-            var username = $("#Username");
-            var password = $("#Password");
+        $("#newConnectionButton").on("click", function () {
+            var url = '@Url.Action("NewConnection", "Settings")';
 
-            username.prop('disabled', checked);
-            password.prop('disabled', checked);
-
-            if (checked) {
-                username.val('');
-                password.val('');
-            }
-        }
-
-        function onConnectionTypeChange(type) {
-            var ntlmCredsRow = $('#ntlmUserCredsRow');
-            var ntlmDefaultRow = $('#ntlmDefaultCredsRow');
-            var patRow = $('#personalAccessTokenRow');
-
-            if (type.indexOf('NTLM') > -1) {
-                ntlmCredsRow.show();
-                ntlmDefaultRow.show();
-                patRow.hide();
-            }
-            else {
-                ntlmCredsRow.hide();
-                ntlmDefaultRow.hide();
-                patRow.show();
-            }
-        }
-
-        $(function () {
-            const { ipcRenderer } = require("electron");
-
-            $('#azure-devops-pat-docs').click(function () {
-                ipcRenderer.send("azure-devops-pat-docs");
+            $.get(url, function (partialView) {
+                $('#connectionsTable> tbody:last-child').append(partialView);
+            })
+            .fail(function () {
+                // TODO: on page alert for New error
+                alert('Error trying to add new TFS connection.');
+            })
+            .always(function () {
             });
-
-            $("#UseWindowsIdentity").change(function () {
-                onWindowsIdentityChange(this.checked);               
-            });
-
-            $("#settingsForm").submit(function (event) {
-                $("#saveButton").prop('disabled', true);
-                $("#SavingLabel").text('Saving and testing connection, please wait...');
-                $("#saveAlert").hide();
-            });
-
-            $("#ConnectionType").change(function () {
-                onConnectionTypeChange(this.value);
-            });
-
-            onWindowsIdentityChange(@Json.Serialize(Model.UseWindowsIdentity));
-            onConnectionTypeChange(@Json.Serialize(Model.ConnectionType));
         });
     </script>
 }
 
-<form asp-antiforgery="true" asp-controller="Settings" asp-action="SaveConnection" id="settingsForm">
-    <h2>App Settings</h2>
-    <hr />
-    <div asp-validation-summary="All" class="text-danger"></div>
-    <fieldset>
-        <legend>TFS Connection</legend>
+<h2>App Settings</h2>
 
-        <div class="row">
-            <label asp-for="Url" class="col-md-2 control-label"></label>
-            <div class="form-group col-md-10">
-                <input asp-for="Url" class="form-control" placeholder="http://server:8080/tfs/DefaultCollection" />
-                <span asp-validation-for="Url" class="text-danger"></span>
-            </div>
-        </div>
+<h3>TFS Connections</h3>
 
-        <div class="row">
-            <label asp-for="ConnectionType" class="col-md-2 control-label"></label>
+<button type="button" class="btn btn-primary" id="newConnectionButton">New Connection</button>
 
-            <div class="form-group col-md-10">
-                <select 
-                    asp-for="ConnectionType" 
-                    asp-items="@(new SelectList(Model.ConnectionTypes))">
-                </select>
-            </div>
-        </div>
+<table id="connectionsTable" class="table table-striped">
+    <tbody>
 
-        <div class="row" id="ntlmDefaultCredsRow">
-            <div class="col-md-12">
-                <div class="checkbox">
-                    <label asp-for="UseWindowsIdentity">
-                        <input asp-for="UseWindowsIdentity" type="checkbox" />
-                        Use Windows Identity
-                    </label>
-                </div>
-            </div>
-        </div>
-
-        <div class="row" id="ntlmUserCredsRow">
-            <label asp-for="Username" class="col-md-1 control-label"></label>
-            <div class="form-group col-md-5">
-                <input asp-for="Username" class="form-control" />
-                <span asp-validation-for="Username" class="text-danger"></span>
-            </div>
-
-            <label asp-for="Password" class="col-md-1 control-label"></label>
-            <div class="form-group col-md-5">
-                <input asp-for="Password" class="form-control" value="@Model.Password" />
-                <span asp-validation-for="Password" class="text-danger"></span>
-            </div>
-        </div>
-
-        <div class="row" id="personalAccessTokenRow" style="display: none;">
-            <label asp-for="PersonalAccessToken" class="col-md-2 control-label"></label>
-            <div class="form-group col-md-10">
-                <input asp-for="PersonalAccessToken" class="form-control" />
-                <span asp-validation-for="PersonalAccessToken" class="text-danger"></span>
-                <div>
-                    <a id="azure-devops-pat-docs" href="javascript:;">Instructions</a>
-                    <small>(only Read Work Items needed)</small>
-                </div>
-            </div>
-        </div>
-    </fieldset>
-
-    <input type="submit" class="btn btn-primary" id="saveButton" value="Save" />
-    <span id="SavingLabel" style="margin-left: 10px;"></span>
-
-    @if (Model.ValidationResult != null 
-        && !Model.ValidationResult.IsError 
-        && !string.IsNullOrEmpty(Model.ValidationResult.Message)) { 
-        <div class="alert alert-success alert-dismissible tfs-settings-validate-success" role="alert" id="saveAlert">
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            @Model.ValidationResult.Message
-        </div>
-    }
-</form>
+        @foreach (var connection in Model.Connections)
+        {
+            <partial name="TfsConnectionItem" model="connection" />
+        }
+    </tbody>
+</table>

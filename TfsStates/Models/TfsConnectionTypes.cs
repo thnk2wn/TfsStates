@@ -4,16 +4,19 @@ namespace TfsStates.Models
 {
     public static class TfsConnectionTypes
     {
-        public const string TeamFoundationServer = "TFS Server / NTLM";
+        public const string TfsNTLM = "TFS Server - NTLM";
 
-        public const string AzureDevOps = "Azure DevOps";
+        public const string AzureDevOpsActiveDir = "Azure DevOps - Active Directory";
 
-        public const string Default = TeamFoundationServer;
+        public const string AzureDevOpsToken = "Azure DevOps - Token";
+
+        public const string Default = TfsNTLM;
 
         public static List<string> Items = new List<string>
         {
-            { AzureDevOps },
-            { TeamFoundationServer }           
+            { AzureDevOpsActiveDir },
+            { AzureDevOpsToken },
+            { TfsNTLM }           
         };
     }
 }

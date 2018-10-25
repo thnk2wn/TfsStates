@@ -1,6 +1,6 @@
 using System;
 
-namespace TfsStates.Models
+namespace TfsStates.ViewModels
 {
     public class ErrorViewModel
     {

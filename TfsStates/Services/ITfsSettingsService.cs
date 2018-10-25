@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-using Microsoft.VisualStudio.Services.WebApi;
 using TfsStates.Models;
 
 namespace TfsStates.Services
@@ -7,11 +6,17 @@ namespace TfsStates.Services
     public interface ITfsSettingsService
     {
         Task<string> GetFilename();
-        Task<TfsConnectionModel> GetSettings();
-        Task<TfsConnectionModel> GetSettingsOrDefault();
-        Task<VssConnection> GetConnection();
+
+        Task<TfsKnownConnections> GetConnections();
+
+        Task<TfsKnownConnections> GetConnectionsOrDefault();
+
+        Task<TfsKnownConnection> GetActiveConnection();
+
         Task<bool> HasSettings();
-        Task<TfsConnectionModel> Save(TfsConnectionModel model, bool validate = true);
-        Task<TfsConnectionModel> Validate(TfsConnectionModel model);
+
+        Task Save(TfsKnownConnection connection);
+
+        Task<TfsConnectionValidationResult> Validate(TfsKnownConnection connection);
     }
 }
