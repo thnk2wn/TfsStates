@@ -13,10 +13,6 @@ namespace TfsStates.Services
         {
             VssCredentials creds = null;
 
-            //new VssAadCredential()
-
-            //new NetworkCredential()
-
             if (connection.ConnectionType == TfsConnectionTypes.TfsNTLM)
             {
                 creds = connection.UseDefaultCredentials
@@ -24,6 +20,13 @@ namespace TfsStates.Services
                     : new VssCredentials(
                         new WindowsCredential(
                             new NetworkCredential(connection.Username, connection.Password)));
+            }
+            else if (connection.ConnectionType == TfsConnectionTypes.AzureDevOpsActiveDir)
+            {
+                if (connection.UseDefaultCredentials)
+                    creds = new VssAadCredential();
+                else 
+                    creds = new VssAadCredential(connection.Username, connection.Password);
             }
             else if (connection.ConnectionType == TfsConnectionTypes.AzureDevOpsToken)
             {

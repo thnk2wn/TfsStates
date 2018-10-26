@@ -39,7 +39,9 @@ namespace TfsStates.Controllers
             var model = new TfsConnectionItemViewModel 
             {
                 Id = Guid.NewGuid(),
-                ConnectionTypes = TfsConnectionTypes.Items
+                ConnectionTypes = TfsConnectionTypes.Items,
+                ConnectionType = TfsConnectionTypes.AzureDevOpsActiveDir,
+                UseDefaultCredentials = true
             };
 
             return PartialView(ConnectionItemViewName, model);
@@ -47,8 +49,6 @@ namespace TfsStates.Controllers
 
         public async Task<IActionResult> SaveConnection(TfsConnectionItemViewModel viewModel)
         {
-            // TODO: validate
-
             viewModel.ConnectionTypes = TfsConnectionTypes.Items;
 
             if (viewModel.ConnectionType == TfsConnectionTypes.AzureDevOpsToken

@@ -31,7 +31,9 @@
                 var $appended = $('#connectionsTable> tbody:last-child').append(partialView);
                 var $form = $appended.find('form');
                 var $connType = $form.find('.connection-type');
+                var $useDefaultCreds = $form.find('.use-default-credentials');
                 onConnectionTypeChange($connType[0]);
+                onWindowsIdentityChange($useDefaultCreds[0]);
             })
             .fail(function () {
                 // TODO: on page alert for New error

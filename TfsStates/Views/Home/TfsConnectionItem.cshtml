@@ -4,35 +4,15 @@
 
 @model TfsStates.ViewModels.TfsConnectionItemViewModel
 
-@section Scripts {
-    <script type="text/javascript">
-        
-
-        $(function () {
-            console.log('ready');
-
-            $(".use-default-credentials").change(function () {
-                onWindowsIdentityChange(this.checked);
-            });
-
-            $(".settingsForm").submit(function (event) {
-                $("#saveButton").prop('disabled', true);
-                $("#SavingLabel").text('Saving and testing connection, please wait...');
-                $("#saveAlert").hide();
-            });
-
-            onWindowsIdentityChange(@Json.Serialize(Model.UseDefaultCredentials));
-        });
-    </script>
-}
-
 <div class="row">
     <form asp-antiforgery="true"
           asp-controller="Settings"
-          asp-action="UpdateConnection"
+          asp-action="SaveConnection"
           class="connectionForm"
           id="connectionForm_@Model.Id"
-          data-id="@Model.Id">
+          data-id="@Model.Id"
+          onsubmit="onSavingConnection(this)">
+        <input type="hidden" name="Id" value="@Model.Id" />
         <hr style="border-color: black" />
         <div asp-validation-summary="All" class="text-danger"></div>
         <fieldset>
@@ -61,7 +41,11 @@
                 <div class="col-md-12">
                     <div class="checkbox">
                         <label asp-for="UseDefaultCredentials">
-                            <input asp-for="UseDefaultCredentials" type="checkbox" class="use-default-credentials" />
+                            <input 
+                                asp-for="UseDefaultCredentials" 
+                                type="checkbox" 
+                                class="use-default-credentials" 
+                                onchange="onWindowsIdentityChange(this)" />
                             Use Default Credentials
                         </label>
                     </div>
@@ -71,13 +55,13 @@
             <div class="row user-creds-row">
                 <label asp-for="Username" class="col-md-1 control-label"></label>
                 <div class="form-group col-md-5">
-                    <input asp-for="Username" class="form-control" />
+                    <input asp-for="Username" class="form-control username" />
                     <span asp-validation-for="Username" class="text-danger"></span>
                 </div>
 
                 <label asp-for="Password" class="col-md-1 control-label"></label>
                 <div class="form-group col-md-5">
-                    <input asp-for="Password" class="form-control" value="@Model.Password" />
+                    <input asp-for="Password" class="form-control password" value="@Model.Password" />
                     <span asp-validation-for="Password" class="text-danger"></span>
                 </div>
             </div>
@@ -95,19 +79,19 @@
             </div>
         </fieldset>
 
-        <input type="submit" class="btn btn-primary" id="saveButton" value="Save" />
+        <input type="submit" class="btn btn-primary save-button" value="Save" />
 
         <button type="button" class="btn btn-danger" style="margin-left: 30px;">
             <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete
         </button>
 
-        <div id="SavingLabel" style="margin-left: 10px;"></div>
+        <div class=".saving-label" style="margin-left: 10px;"></div>
 
         @if (Model.ValidationResult != null
         && !Model.ValidationResult.IsError
         && !string.IsNullOrEmpty(Model.ValidationResult.Message))
         {
-            <div class="alert alert-success alert-dismissible tfs-settings-validate-success" role="alert" id="saveAlert">
+            <div class="alert alert-success alert-dismissible tfs-settings-validate-success" role="alert">
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 @Model.ValidationResult.Message
             </div>
