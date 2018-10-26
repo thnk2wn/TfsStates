@@ -28,28 +28,32 @@ namespace TfsStates.Services
         {
             var filename = await GetFilename();
 
-            if (File.Exists(filename))
+            if (!File.Exists(filename)) return null;
+
+            var json = await File.ReadAllTextAsync(filename);
+            var model = JsonConvert.DeserializeObject<TfsKnownConnections>(json);
+
+            foreach (var connection in model.Connections)
             {
-                var json = await File.ReadAllTextAsync(filename);
-                var model = JsonConvert.DeserializeObject<TfsKnownConnections>(json);
-
-                foreach (var connection in model.Connections)
+                if (connection.ConnectionType == TfsConnectionTypes.TfsNTLM 
+                    && !connection.UseDefaultCredentials
+                    && connection.Password != null)
                 {
-                    if (connection.ConnectionType == TfsConnectionTypes.TfsNTLM && !connection.UseDefaultCredentials)
-                    {
-                        connection.Password = EncryptionService.DecryptString(connection.Password, EncryptionSettings.Key);
-                    }
-
-                    if (connection.ConnectionType == TfsConnectionTypes.AzureDevOpsToken)
-                    {
-                        connection.PersonalAccessToken = EncryptionService.DecryptString(connection.Password, EncryptionSettings.Key);
-                    }
+                    connection.Password = EncryptionService.DecryptString(
+                        connection.Password, 
+                        EncryptionSettings.Key);
                 }
 
-                return model;
+                if (connection.ConnectionType == TfsConnectionTypes.AzureDevOpsToken
+                    && connection.PersonalAccessToken != null)
+                {
+                    connection.PersonalAccessToken = EncryptionService.DecryptString(
+                        connection.PersonalAccessToken, 
+                        EncryptionSettings.Key);
+                }
             }
 
-            return null;
+            return model;
         }
 
         public async Task<TfsKnownConnections> GetConnectionsOrDefault()

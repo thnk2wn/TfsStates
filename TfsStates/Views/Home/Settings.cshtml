@@ -21,8 +21,10 @@
         $(function () {
             ipcRenderer = require("electron");
 
-            if ($('#connectionsTable> tbody').children().length == 0) {
-                $("#newConnectionButton").click();
+            var connCount = @Model.Connections?.Count  ?? 0;
+
+            if (connCount == 0) {
+                $("#newConnectionButton").click();               
             }
         });
 
@@ -54,6 +56,11 @@
         }
 
         $("#newConnectionButton").on("click", function () {
+            this.prop('disabled', true);
+            setTimeout(function () {
+                $("#newConnectionButton").prop('disabled', false);
+            }, 3000);
+
             var url = '@Url.Action("NewConnection", "Settings")';
 
             $.get(url, function (newConnectionView) {
@@ -81,7 +88,7 @@
 
         @foreach (var connection in Model.Connections)
         {
-            <partial name="TfsConnectionItem" model="connection" />
+            <partial name="TfsConnectionItem.cshtml" model="connection"  />
         }
     </tbody>
 </table>
