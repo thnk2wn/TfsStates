@@ -30,6 +30,7 @@ namespace TfsStates.ViewModels
         public List<string> ConnectionTypes { get; set; }
 
         [DisplayName("Personal Access Token")]
+        [DataType(DataType.Password)]
         public string PersonalAccessToken { get; set; }
 
         public bool IsSet()

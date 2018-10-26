@@ -35,9 +35,14 @@ namespace TfsStates.Services
 
                 foreach (var connection in model.Connections)
                 {
-                    if (!connection.UseDefaultCredentials)
+                    if (connection.ConnectionType == TfsConnectionTypes.TfsNTLM && !connection.UseDefaultCredentials)
                     {
                         connection.Password = EncryptionService.DecryptString(connection.Password, EncryptionSettings.Key);
+                    }
+
+                    if (connection.ConnectionType == TfsConnectionTypes.AzureDevOpsToken)
+                    {
+                        connection.PersonalAccessToken = EncryptionService.DecryptString(connection.Password, EncryptionSettings.Key);
                     }
                 }
 
@@ -66,10 +71,16 @@ namespace TfsStates.Services
             string filename = await GetFilename();
             var connections = await GetConnectionsOrDefault();
             var originalPassword = connection.Password;
+            var originalToken = connection.PersonalAccessToken;
 
             if (!string.IsNullOrEmpty(connection.Password))
             { 
                 connection.Password = EncryptionService.EncryptString(connection.Password, EncryptionSettings.Key);
+            }
+
+            if (!string.IsNullOrEmpty(connection.PersonalAccessToken))
+            {
+                connection.PersonalAccessToken = EncryptionService.EncryptString(connection.Password, EncryptionSettings.Key);
             }
 
             var existingConnection = connections.Connections.FirstOrDefault(c => c.Id == connection.Id);

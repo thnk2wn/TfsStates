@@ -26,7 +26,7 @@ namespace TfsStates.Models
         {
             if (string.IsNullOrEmpty(Url)) return false;
 
-            if (ConnectionType == TfsConnectionTypes.TfsNTLM || ConnectionType == TfsConnectionTypes.AzureDevOpsActiveDir)
+            if (ConnectionType == TfsConnectionTypes.TfsNTLM)
             { 
                 return (UseDefaultCredentials || (!string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Password)));
             }

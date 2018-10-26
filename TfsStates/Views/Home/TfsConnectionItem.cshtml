@@ -4,7 +4,7 @@
 
 @model TfsStates.ViewModels.TfsConnectionItemViewModel
 
-<div class="row">
+<div class="row connection-root">
     <form asp-antiforgery="true"
           asp-controller="Settings"
           asp-action="SaveConnection"
@@ -32,8 +32,11 @@
             <div class="row">
                 <label asp-for="Url" class="col-md-2 control-label"></label>
                 <div class="form-group col-md-10">
-                    <input asp-for="Url" class="form-control" placeholder="http://server:8080/tfs/DefaultCollection" />
+                    <input asp-for="Url" class="form-control url" />
                     <span asp-validation-for="Url" class="text-danger"></span>
+                    <div>
+                        <small class="url-example"></small>
+                    </div>
                 </div>
             </div>
 
@@ -72,7 +75,7 @@
                     <input asp-for="PersonalAccessToken" class="form-control" />
                     <span asp-validation-for="PersonalAccessToken" class="text-danger"></span>
                     <div>
-                        <a class="azure-devops-pat-docs" href="javascript:;">Instructions</a>
+                        <a class="azure-devops-pat-docs" href="javascript:;" onclick="azureDevOpsTokenHelp();">Instructions</a>
                         <small>(only Read Work Items needed)</small>
                     </div>
                 </div>
@@ -81,11 +84,11 @@
 
         <input type="submit" class="btn btn-primary save-button" value="Save" />
 
-        <button type="button" class="btn btn-danger" style="margin-left: 30px;">
+        <button type="button" class="btn btn-danger delete-button" style="margin-left: 30px;">
             <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete
         </button>
 
-        <div class=".saving-label" style="margin-left: 10px;"></div>
+        <div class="saving-label" style="margin-left: 10px;"></div>
 
         @if (Model.ValidationResult != null
         && !Model.ValidationResult.IsError

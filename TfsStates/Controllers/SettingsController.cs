@@ -40,7 +40,7 @@ namespace TfsStates.Controllers
             {
                 Id = Guid.NewGuid(),
                 ConnectionTypes = TfsConnectionTypes.Items,
-                ConnectionType = TfsConnectionTypes.AzureDevOpsActiveDir,
+                ConnectionType = TfsConnectionTypes.AzureDevOpsToken,
                 UseDefaultCredentials = true
             };
 
@@ -61,7 +61,7 @@ namespace TfsStates.Controllers
 
             if (!ModelState.IsValid)
             {
-                return View(ViewName, viewModel);
+                return PartialView(ConnectionItemViewName, viewModel);
             }
 
             var knownConn = viewModel.ToKnownConnection();
@@ -77,11 +77,7 @@ namespace TfsStates.Controllers
                 ModelState.AddModelError(string.Empty, viewModel.ValidationResult.Message);
             }
 
-            if (viewModel.ValidationResult.IsError)
-            {
-                ModelState.AddModelError(string.Empty, viewModel.ValidationResult.Message);
-            }
-            else
+            if (!viewModel.ValidationResult.IsError)
             {
                 await this.reportHistoryService.Clear();
             }

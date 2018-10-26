@@ -6,7 +6,7 @@ namespace TfsStates.Models
     {
         public const string TfsNTLM = "TFS Server - NTLM";
 
-        public const string AzureDevOpsActiveDir = "Azure DevOps - Active Directory";
+        // public const string AzureDevOpsActiveDir = "Azure DevOps - Active Directory";
 
         public const string AzureDevOpsToken = "Azure DevOps - Token";
 
@@ -14,7 +14,7 @@ namespace TfsStates.Models
 
         public static List<string> Items = new List<string>
         {
-            { AzureDevOpsActiveDir },
+            // { AzureDevOpsActiveDir },
             { AzureDevOpsToken },
             { TfsNTLM }           
         };

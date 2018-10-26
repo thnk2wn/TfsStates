@@ -16,24 +16,49 @@
     </environment>
 
     <script type="text/javascript">
-        $(function () {
-            const { ipcRenderer } = require("electron");
+        var ipcRenderer;
 
-            $('.azure-devops-pat-docs').click(function () {
-                ipcRenderer.send("azure-devops-pat-docs");
-            });
+        $(function () {
+            ipcRenderer = require("electron");
+
+            if ($('#connectionsTable> tbody').children().length == 0) {
+                $("#newConnectionButton").click();
+            }
         });
+
+        function azureDevOpsTokenHelp() {
+            ipcRenderer.send("azure-devops-pat-docs");
+        }
+
+        function initNewConnection($appended) {
+            var $root = $appended.find('.connection-root');
+            var $form = $appended.find('form');
+            var $connType = $form.find('.connection-type');
+            var $useDefaultCreds = $form.find('.use-default-credentials');
+            onConnectionTypeChange($connType[0]);
+            onWindowsIdentityChange($useDefaultCreds[0]);
+
+            $form.submit(function (e) {
+                e.preventDefault();
+                var data = $form.serialize();
+
+                $.post($form[0].action, data, function (savedConnectionView) {
+                    var id = $form.find('input[name=Id]').val();
+                    $root.replaceWith(savedConnectionView);
+
+                    var $newForm = $('#connectionsTable').find('#connectionForm_' + id);
+                    var $replaced = $newForm.closest('.connection-root');
+                    initNewConnection($replaced);
+                });
+            });
+        }
 
         $("#newConnectionButton").on("click", function () {
             var url = '@Url.Action("NewConnection", "Settings")';
 
-            $.get(url, function (partialView) {
-                var $appended = $('#connectionsTable> tbody:last-child').append(partialView);
-                var $form = $appended.find('form');
-                var $connType = $form.find('.connection-type');
-                var $useDefaultCreds = $form.find('.use-default-credentials');
-                onConnectionTypeChange($connType[0]);
-                onWindowsIdentityChange($useDefaultCreds[0]);
+            $.get(url, function (newConnectionView) {
+                var $appended = $('#connectionsTable> tbody:last-child').append(newConnectionView);
+                initNewConnection($appended);
             })
             .fail(function () {
                 // TODO: on page alert for New error
