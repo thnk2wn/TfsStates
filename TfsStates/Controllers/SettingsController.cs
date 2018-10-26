@@ -41,7 +41,7 @@ namespace TfsStates.Controllers
                 Id = Guid.NewGuid(),
                 ConnectionTypes = TfsConnectionTypes.Items,
                 ConnectionType = TfsConnectionTypes.AzureDevOpsToken,
-                UseDefaultCredentials = true
+                UseDefaultCredentials = false
             };
 
             return PartialView(ConnectionItemViewName, model);
@@ -51,38 +51,67 @@ namespace TfsStates.Controllers
         {
             viewModel.ConnectionTypes = TfsConnectionTypes.Items;
 
-            if (viewModel.ConnectionType == TfsConnectionTypes.AzureDevOpsToken
-                && string.IsNullOrEmpty(viewModel.PersonalAccessToken))
-            {
-                ModelState.AddModelError(
-                    nameof(viewModel.PersonalAccessToken),
-                    "Personal Access Token is required");
-            }
+            var knownConn = await ValidateConnection(viewModel);
 
             if (!ModelState.IsValid)
             {
                 return PartialView(ConnectionItemViewName, viewModel);
             }
 
+            await this.settingsService.Save(knownConn);
+            await this.reportHistoryService.Clear();
+
+            return PartialView(ConnectionItemViewName, viewModel);
+        }
+
+        private async Task<TfsKnownConnection> ValidateConnection(TfsConnectionItemViewModel viewModel)
+        {
+            if (viewModel.ConnectionType == TfsConnectionTypes.AzureDevOpsToken)
+            {
+                if (string.IsNullOrEmpty(viewModel.PersonalAccessToken))
+                {
+                    ModelState.AddModelError(
+                        nameof(viewModel.PersonalAccessToken),
+                        "Personal Access Token is required");
+                }
+
+                if (viewModel.UseDefaultCredentials)
+                {
+                    ModelState.AddModelError(
+                        nameof(viewModel.UseDefaultCredentials),
+                        "Use default credentials is not applicable with personal access tokens");
+                }
+            }
+            else if (viewModel.ConnectionType == TfsConnectionTypes.TfsNTLM)
+            {
+                if (!string.IsNullOrEmpty(viewModel.PersonalAccessToken))
+                {
+                    ModelState.AddModelError(
+                        nameof(viewModel.PersonalAccessToken),
+                        "Personal Access Token is not applicable when using credentials");
+                }
+
+                if (viewModel.UseDefaultCredentials
+                    && (!string.IsNullOrEmpty(viewModel.Username) || !string.IsNullOrEmpty(viewModel.Password)))
+                {
+                    ModelState.AddModelError(
+                        nameof(viewModel.UseDefaultCredentials),
+                        "Username and password are not applicable when using default credentials");
+                }
+            }
+
+            if (!ModelState.IsValid) return null;
+
             var knownConn = viewModel.ToKnownConnection();
             viewModel.ValidationResult = await this.settingsService.Validate(knownConn);
 
-            if (!viewModel.ValidationResult.IsError) 
-            {
-                await this.settingsService.Save(knownConn);
-                await this.reportHistoryService.Clear();
-            }
-            else
+            if (viewModel.ValidationResult.IsError)
             {
                 ModelState.AddModelError(string.Empty, viewModel.ValidationResult.Message);
+                return null;
             }
 
-            if (!viewModel.ValidationResult.IsError)
-            {
-                await this.reportHistoryService.Clear();
-            }
-
-            return PartialView(ConnectionItemViewName, viewModel);
+            return knownConn;
         }
 
         private void RegisterOpenWebLink(string channel, string url)

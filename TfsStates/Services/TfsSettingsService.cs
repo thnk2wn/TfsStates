@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
 using Newtonsoft.Json;
@@ -12,6 +13,13 @@ namespace TfsStates.Services
 {
     public class TfsSettingsService : ITfsSettingsService
     {
+        private readonly IDataProtector dataProtector;
+
+        public TfsSettingsService(IDataProtectionProvider dataProtection)
+        {
+            this.dataProtector = dataProtection.CreateProtector(this.GetType().FullName); ;
+        }
+
         public async Task<string> GetFilename()
         {
             var filename = await FileUtility.GetFilename("tfs-settings.json");
@@ -39,17 +47,14 @@ namespace TfsStates.Services
                     && !connection.UseDefaultCredentials
                     && connection.Password != null)
                 {
-                    connection.Password = EncryptionService.DecryptString(
-                        connection.Password, 
-                        EncryptionSettings.Key);
+                    connection.Password = this.dataProtector.Unprotect(connection.Password);
                 }
 
                 if (connection.ConnectionType == TfsConnectionTypes.AzureDevOpsToken
                     && connection.PersonalAccessToken != null)
                 {
-                    connection.PersonalAccessToken = EncryptionService.DecryptString(
-                        connection.PersonalAccessToken, 
-                        EncryptionSettings.Key);
+                    connection.PersonalAccessToken = this.dataProtector.Unprotect(
+                        connection.PersonalAccessToken);
                 }
             }
 
@@ -79,12 +84,12 @@ namespace TfsStates.Services
 
             if (!string.IsNullOrEmpty(connection.Password))
             { 
-                connection.Password = EncryptionService.EncryptString(connection.Password, EncryptionSettings.Key);
+                connection.Password = this.dataProtector.Protect(connection.Password);
             }
 
             if (!string.IsNullOrEmpty(connection.PersonalAccessToken))
             {
-                connection.PersonalAccessToken = EncryptionService.EncryptString(connection.Password, EncryptionSettings.Key);
+                connection.PersonalAccessToken = this.dataProtector.Protect(connection.PersonalAccessToken);
             }
 
             var existingConnection = connections.Connections.FirstOrDefault(c => c.Id == connection.Id);
@@ -105,6 +110,7 @@ namespace TfsStates.Services
             await File.WriteAllTextAsync(filename, json);
 
             connection.Password = originalPassword;
+            connection.PersonalAccessToken = originalToken;
         }
 
         public async Task<TfsConnectionValidationResult> Validate(TfsKnownConnection connection)
@@ -140,7 +146,7 @@ namespace TfsStates.Services
 
             return new TfsConnectionValidationResult
             {
-                Message = "TFS connection validation test successful."
+                Message = $"Successfully connected to {connection.Url}."
             };
         }
     }

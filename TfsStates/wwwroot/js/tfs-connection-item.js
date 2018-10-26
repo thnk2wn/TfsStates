@@ -1,4 +1,26 @@
-﻿function onWindowsIdentityChange(element) {
+﻿function initNewConnection($connRoot) {
+    var $form = $connRoot.find('form');
+    var $connType = $connRoot.find('.connection-type');
+    var $useDefaultCreds = $connRoot.find('.use-default-credentials');
+    onConnectionTypeChange($connType[0]);
+    onWindowsIdentityChange($useDefaultCreds[0]);
+    var id = $connRoot.attr('data-id');
+
+    $form.submit(function (e) {
+        e.preventDefault();
+        var data = $form.serialize();
+
+        $.post($form[0].action, data, function (savedConnectionView) {
+            $connRoot.replaceWith(savedConnectionView);
+
+            var $newForm = $('body').find('#connectionForm_' + id);
+            var $replaced = $newForm.closest('.connection-root');
+            initNewConnection($replaced);
+        });
+    });
+}
+
+function onWindowsIdentityChange(element) {
     var checked = element.checked;
     var $root = getRootContainer(element);
     var $username = $root.find('.username');
@@ -15,7 +37,7 @@
 
 function getRootContainer(element) {
     var $element = $(element);
-    var $form = $element.closest('form');
+    var $form = $element.closest('.connection-root');
     return $form;
 }
 
@@ -48,10 +70,14 @@ function onConnectionTypeChange(element) {
 
 function onSavingConnection(form) {
     var $form = $(form);
+    $form.find(".tfs-settings-validate-success").hide();
+
+    var $savingLabel = $form.find(".saving-label");
+    $savingLabel.show();
+    $savingLabel.html('<p>Saving and testing connection, please wait...</p>');
+
     $form.find(".save-button").prop('disabled', true);
     $form.find(".delete-button").prop('disabled', true);
-    $form.find(".saving-label").text('Saving and testing connection, please wait...');
-    $form.find(".tfs-settings-validate-success").hide();
 }
 
 function afterSave($form) {

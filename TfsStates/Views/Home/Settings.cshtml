@@ -9,10 +9,10 @@
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 
     <environment include="Development">
-        <script src="~/js/tfs-connection-item.js"></script>
+        <script src="~/js/tfs-connection-item.js" asp-append-version="true"></script>
     </environment>
     <environment exclude="Development">
-        <script src="~/js/tfs-connection-item.js"></script>
+        <script src="~/js/tfs-connection-item.js" asp-append-version="true"></script>
     </environment>
 
     <script type="text/javascript">
@@ -21,42 +21,24 @@
         $(function () {
             ipcRenderer = require("electron");
 
-            var connCount = @Model.Connections?.Count  ?? 0;
-
-            if (connCount == 0) {
-                $("#newConnectionButton").click();               
+            @if ((Model.Connections?.Count ?? 0) == 0)
+            {
+            @:$("#newConnectionButton").click();
+            }
+            else
+            {
+            @:$('div.connection-root').each(function (i, e) { initNewConnection($(this)); });
             }
         });
 
         function azureDevOpsTokenHelp() {
-            ipcRenderer.send("azure-devops-pat-docs");
-        }
-
-        function initNewConnection($appended) {
-            var $root = $appended.find('.connection-root');
-            var $form = $appended.find('form');
-            var $connType = $form.find('.connection-type');
-            var $useDefaultCreds = $form.find('.use-default-credentials');
-            onConnectionTypeChange($connType[0]);
-            onWindowsIdentityChange($useDefaultCreds[0]);
-
-            $form.submit(function (e) {
-                e.preventDefault();
-                var data = $form.serialize();
-
-                $.post($form[0].action, data, function (savedConnectionView) {
-                    var id = $form.find('input[name=Id]').val();
-                    $root.replaceWith(savedConnectionView);
-
-                    var $newForm = $('#connectionsTable').find('#connectionForm_' + id);
-                    var $replaced = $newForm.closest('.connection-root');
-                    initNewConnection($replaced);
-                });
-            });
+            const { ipc } = require("electron");
+            ipc.send("azure-devops-pat-docs");
         }
 
         $("#newConnectionButton").on("click", function () {
-            this.prop('disabled', true);
+            $(this).prop('disabled', true);
+
             setTimeout(function () {
                 $("#newConnectionButton").prop('disabled', false);
             }, 3000);
@@ -64,8 +46,10 @@
             var url = '@Url.Action("NewConnection", "Settings")';
 
             $.get(url, function (newConnectionView) {
-                var $appended = $('#connectionsTable> tbody:last-child').append(newConnectionView);
-                initNewConnection($appended);
+                const lastChild = '#connectionsTable> tbody:last-child';
+                $(lastChild).append(newConnectionView);
+                var $newConnection = $(lastChild);
+                initNewConnection($newConnection);
             })
             .fail(function () {
                 // TODO: on page alert for New error
