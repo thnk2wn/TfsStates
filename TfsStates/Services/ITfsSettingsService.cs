@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using TfsStates.Models;
 
 namespace TfsStates.Services
@@ -18,5 +19,7 @@ namespace TfsStates.Services
         Task Save(TfsKnownConnection connection);
 
         Task<TfsConnectionValidationResult> Validate(TfsKnownConnection connection);
+
+        Task<bool> Remove(Guid connectionId);
     }
 }

@@ -47,6 +47,7 @@ namespace TfsStates.Controllers
             return PartialView(ConnectionItemViewName, model);
         }
 
+        [HttpPost]
         public async Task<IActionResult> SaveConnection(TfsConnectionItemViewModel viewModel)
         {
             viewModel.ConnectionTypes = TfsConnectionTypes.Items;
@@ -62,6 +63,13 @@ namespace TfsStates.Controllers
             await this.reportHistoryService.Clear();
 
             return PartialView(ConnectionItemViewName, viewModel);
+        }
+
+        [HttpDelete("/settings/remove-connection/{connectionId}")]
+        public async Task<IActionResult> RemoveConnection([FromRoute]Guid connectionId)
+        {
+            await this.settingsService.Remove(connectionId);
+            return Json(true);
         }
 
         private async Task<TfsKnownConnection> ValidateConnection(TfsConnectionItemViewModel viewModel)

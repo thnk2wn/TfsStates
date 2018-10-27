@@ -1,4 +1,10 @@
-﻿function initNewConnection($connRoot) {
+﻿function getRootContainerById(connectionId) {
+    var $form = $('body').find('#connectionForm_' + connectionId);
+    var $root = $form.closest('.connection-root');
+    return $root;
+}
+
+function initNewConnection($connRoot) {
     var $form = $connRoot.find('form');
     var $connType = $connRoot.find('.connection-type');
     var $useDefaultCreds = $connRoot.find('.use-default-credentials');
@@ -63,7 +69,7 @@ function onConnectionTypeChange(element) {
         $defaultCredsRow.hide();
         $userCredsRow.hide();
         $tokenRow.show();
-        $urlExample.html('i.e. <em>https://dev.azure.com/org-name</em> or <em>https://domain.visualstudio.com</em>');
+        $urlExample.html('i.e. <em>https://dev.azure.com/org-name</em> &nbsp; or &nbsp; <em>https://domain.visualstudio.com</em>');
         $url.attr('placeholder', 'https://dev.azure.com/org-name');
     }    
 }
@@ -84,4 +90,48 @@ function afterSave($form) {
     $form.find(".save-button").prop('disabled', false);
     $form.find(".delete-button").prop('disabled', false);
     $form.find(".saving-label").hide();
+}
+
+function afterDelete(connectionId, result, isError) {
+    // it may not remove from backend if never saved before, we remove either way.
+    $container = getRootContainerById(connectionId);
+    $container.remove();
+
+    var type = 'success';
+
+    if (isError) {
+        type = 'danger';
+    }
+    else if (!result) {
+        type = 'info';
+    }
+
+    $.notify({
+        message: 'Connection removed'
+    }, {
+        type: type
+    });
+}
+
+function beginDeleteConnection(element) {
+    var $root = getRootContainer(element);
+    var $alert = $root.find('.delete-alert');
+    $alert.show();
+}
+
+function deleteConnection(connectionId) {
+    var $root = getRootContainerById(connectionId);
+    var $alert = $root.find('.delete-alert');
+    $alert.hide();
+
+    $.ajax({
+        url: '/settings/remove-connection/' + connectionId,
+        type: 'DELETE'
+    })
+    .done(function (result) {
+        afterDelete(connectionId, result, false);
+    })
+    .fail(function () {
+        afterDelete(connectionId, false, true);
+    });
 }

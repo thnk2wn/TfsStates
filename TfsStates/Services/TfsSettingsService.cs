@@ -75,6 +75,22 @@ namespace TfsStates.Services
             return connection;
         }
 
+        public async Task<bool> Remove(Guid connectionId)
+        {
+            string filename = await GetFilename();
+            if (!File.Exists(filename)) return false;
+
+            var connections = await GetConnections();
+            var connection = connections.Connections.FirstOrDefault(c => c.Id == connectionId);
+
+            if (connection == null) return false;
+
+            connections.Connections.Remove(connection);
+            await SaveConnections(filename, connections);
+
+            return true;
+        }
+
         public async Task Save(TfsKnownConnection connection)
         {
             string filename = await GetFilename();
@@ -83,7 +99,7 @@ namespace TfsStates.Services
             var originalToken = connection.PersonalAccessToken;
 
             if (!string.IsNullOrEmpty(connection.Password))
-            { 
+            {
                 connection.Password = this.dataProtector.Protect(connection.Password);
             }
 
@@ -106,11 +122,16 @@ namespace TfsStates.Services
                 connections.Connections[index] = connection;
             }
 
-            var json = JsonConvert.SerializeObject(connections, Formatting.Indented);
-            await File.WriteAllTextAsync(filename, json);
+            await SaveConnections(filename, connections);
 
             connection.Password = originalPassword;
             connection.PersonalAccessToken = originalToken;
+        }
+
+        private static async Task SaveConnections(string filename, TfsKnownConnections connections)
+        {
+            var json = JsonConvert.SerializeObject(connections, Formatting.Indented);
+            await File.WriteAllTextAsync(filename, json);
         }
 
         public async Task<TfsConnectionValidationResult> Validate(TfsKnownConnection connection)
