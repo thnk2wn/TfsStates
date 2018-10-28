@@ -8,12 +8,19 @@ function initNewConnection($connRoot) {
     var $form = $connRoot.find('form');
     var $connType = $connRoot.find('.connection-type');
     var $useDefaultCreds = $connRoot.find('.use-default-credentials');
+    var id = $form.attr('data-id');
+
     onConnectionTypeChange($connType[0]);
     onWindowsIdentityChange($useDefaultCreds[0]);
-    var id = $connRoot.attr('data-id');
-
+    
     $form.submit(function (e) {
         e.preventDefault();
+
+        var testModeElem = e.target.elements.TestMode;
+        var testMode = testModeElem.value || "false";
+        testMode = testMode === "true" ? "true" : "false";
+        testModeElem.value = testMode;
+
         var data = $form.serialize();
 
         $.post($form[0].action, data, function (savedConnectionView) {
@@ -117,6 +124,18 @@ function beginDeleteConnection(element) {
     var $root = getRootContainer(element);
     var $alert = $root.find('.delete-alert');
     $alert.show();
+}
+
+function testMode$($form) {
+    return $form.find('input[name="TestMode"]');
+}
+
+function testConnection(element, onSuccess) {
+    var $root = getRootContainer(element);
+    var $form = $root.find('form');
+    $testMode = testMode$($form);
+    $testMode.val(true);
+    $form.submit();
 }
 
 function deleteConnection(connectionId) {

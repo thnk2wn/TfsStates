@@ -10,8 +10,12 @@
           asp-action="SaveConnection"
           class="connectionForm"
           id="connectionForm_@Model.Id"
+          data-id="@Model.Id"
           onsubmit="onSavingConnection(this)">
+
         <input type="hidden" name="Id" value="@Model.Id" />
+        <input type="hidden" name="TestMode" value="@Model.TestMode" />
+
         <hr style="border-color: black" />
         <div asp-validation-summary="All" class="text-danger"></div>
         <fieldset>
@@ -80,6 +84,10 @@
 
         <input type="submit" class="btn btn-primary save-button" value="Save" />
 
+        <button type="button" class="btn btn-success test-button" style="margin-left: 20px;" onclick="testConnection(this)">
+            <span class="glyphicon glyphicon-ok" aria-hidden="true"></span> Test
+        </button>
+
         <button type="button" class="btn btn-danger delete-button" style="margin-left: 40px;" onclick="beginDeleteConnection(this)">
             <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete
         </button>
@@ -92,8 +100,8 @@
         </div>
 
         @if (Model.ValidationResult != null
-       && !Model.ValidationResult.IsError
-       && !string.IsNullOrEmpty(Model.ValidationResult.Message))
+      && !Model.ValidationResult.IsError
+      && !string.IsNullOrEmpty(Model.ValidationResult.Message))
         {
             <div class="alert alert-success alert-dismissible tfs-settings-validate-success" role="alert">
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>

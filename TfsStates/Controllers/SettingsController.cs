@@ -56,12 +56,17 @@ namespace TfsStates.Controllers
 
             if (!ModelState.IsValid)
             {
+                viewModel.TestMode = false;
                 return PartialView(ConnectionItemViewName, viewModel);
             }
 
-            await this.settingsService.Save(knownConn);
-            await this.reportHistoryService.Clear();
+            if (!viewModel.TestMode)
+            {
+                await this.settingsService.Save(knownConn);
+                await this.reportHistoryService.Clear();
+            }
 
+            viewModel.TestMode = true;
             return PartialView(ConnectionItemViewName, viewModel);
         }
 

@@ -33,6 +33,8 @@ namespace TfsStates.ViewModels
         [DataType(DataType.Password)]
         public string PersonalAccessToken { get; set; }
 
+        public bool TestMode { get; set;  }
+
         public bool IsSet()
         {
             return !string.IsNullOrEmpty(Url)
