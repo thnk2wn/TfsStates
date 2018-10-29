@@ -29,9 +29,25 @@ namespace TfsStates.Controllers
             RegisterOpenWebLink(
                 "azure-devops-pat-docs",
                 "https://github.com/thnk2wn/TfsStates/wiki/Authenticating-with-Azure-DevOps");
-            var viewModel = (await this.settingsService.GetConnectionsOrDefault())
-                .ToViewModel();
-            return View(ViewName, viewModel);
+
+            RegisterOpenWebLink(
+                "azure-devops-pat-msdocs",
+                "https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=vsts");
+
+            try
+            {
+                var viewModel = (await this.settingsService.GetConnectionsOrDefault())
+                    .ToViewModel();
+                return View(ViewName, viewModel);
+            }
+            catch (Exception ex)
+            {
+                var filename = await this.settingsService.GetFilename();
+                ModelState.AddModelError(
+                    string.Empty,
+                    $"Error loading settings. You may want to delete or manually edit {filename}.");
+                return View(ViewName, new TfsConnectionViewModel());
+            }
         }
         
         public IActionResult NewConnection()
@@ -64,9 +80,10 @@ namespace TfsStates.Controllers
             {
                 await this.settingsService.Save(knownConn);
                 await this.reportHistoryService.Clear();
+                viewModel.ValidationResult.Message = $"Settings saved. {viewModel.ValidationResult.Message}";
             }
 
-            viewModel.TestMode = true;
+            viewModel.TestMode = false;
             return PartialView(ConnectionItemViewName, viewModel);
         }
 

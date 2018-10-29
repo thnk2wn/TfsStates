@@ -39,6 +39,10 @@
             ipcRenderer.send("azure-devops-pat-docs");
         }
 
+        function azureDevOpsTokenMSHelp() {
+            ipcRenderer.send("azure-devops-pat-msdocs");
+        }
+
         $("#newConnectionButton").on("click", function () {
             $(this).prop('disabled', true);
 
@@ -64,9 +68,11 @@
     </script>
 }
 
-<h2>App Settings</h2>
+<h2>Settings</h2>
 
 <h3>TFS Connections</h3>
+
+<div asp-validation-summary="All" class="text-danger"></div>
 
 <button type="button" class="btn btn-primary" id="newConnectionButton">New Connection</button>
 

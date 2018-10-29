@@ -83,19 +83,33 @@ function onConnectionTypeChange(element) {
 
 function onSavingConnection(form) {
     var $form = $(form);
-    $form.find(".tfs-settings-validate-success").hide();
+    var $container = $form.parent();
 
-    var $savingLabel = $form.find(".saving-label");
+    $container.find(".tfs-settings-validate-success").hide();
+
+    var $savingLabel = $container.find(".saving-label");
     $savingLabel.show();
-    $savingLabel.html('<p>Saving and testing connection, please wait...</p>');
 
-    $form.find(".save-button").prop('disabled', true);
-    $form.find(".delete-button").prop('disabled', true);
+    var testMode = form.elements.TestMode.value;
+
+    if (testMode === 'true') {
+        console.log('testing connection');
+        $savingLabel.html('<p>Testing connection, please wait...</p>');
+    }
+    else {
+        console.log('testing and saving connection');
+        $savingLabel.html('<p>Saving and testing connection, please wait...</p>');
+    }
+
+    $container.find(".save-button").prop('disabled', true);
+    $container.find(".delete-button").prop('disabled', true);
+    $container.find(".test-button").prop('disabled', true);
 }
 
 function afterSave($form) {
     $form.find(".save-button").prop('disabled', false);
     $form.find(".delete-button").prop('disabled', false);
+    $form.find(".delete-button").prop('disabled', true);
     $form.find(".saving-label").hide();
 }
 
@@ -126,15 +140,10 @@ function beginDeleteConnection(element) {
     $alert.show();
 }
 
-function testMode$($form) {
-    return $form.find('input[name="TestMode"]');
-}
-
 function testConnection(element, onSuccess) {
     var $root = getRootContainer(element);
     var $form = $root.find('form');
-    $testMode = testMode$($form);
-    $testMode.val(true);
+    $form[0].elements.TestMode.value = 'true';
     $form.submit();
 }
 

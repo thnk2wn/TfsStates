@@ -76,13 +76,18 @@
                     <span asp-validation-for="PersonalAccessToken" class="text-danger"></span>
                     <div>
                         <a class="azure-devops-pat-docs" href="javascript:;" onclick="azureDevOpsTokenHelp();">Instructions</a>
-                        <small>(only Read Work Items needed)</small>
+                        &nbsp;
+                        &bull;
+                        &nbsp;
+                        <a class="azure-devops-pat-msdocs" href="javascript:;" onclick="azureDevOpsTokenMSHelp();">Microsoft docs</a>
                     </div>
                 </div>
             </div>
         </fieldset>
 
-        <input type="submit" class="btn btn-primary save-button" value="Save" />
+        <button type="submit" class="btn btn-primary save-button">
+            <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span> Save
+        </button>
 
         <button type="button" class="btn btn-success test-button" style="margin-left: 20px;" onclick="testConnection(this)">
             <span class="glyphicon glyphicon-ok" aria-hidden="true"></span> Test
