@@ -31,7 +31,7 @@
             }
             else
             {
-            @:$('div.connection-root').each(function (i, e) { initNewConnection($(this)); });
+            @:$('div.connection-root').each(function (i, e) { initNewConnection($(this), $(this).attr('data-id')); });
             }
         });
 
@@ -53,10 +53,11 @@
             var url = '@Url.Action("NewConnection", "Settings")';
 
             $.get(url, function (newConnectionView) {
-                const lastChild = '#connectionsTable> tbody:last-child';
+                var connId = $(newConnectionView).attr('data-id');
+                const lastChild = '#connection-list:last-child';
                 $(lastChild).append(newConnectionView);
                 var $newConnection = $(lastChild);
-                initNewConnection($newConnection);
+                initNewConnection($newConnection, connId);
             })
             .fail(function () {
                 // TODO: on page alert for New error
@@ -76,12 +77,10 @@
 
 <button type="button" class="btn btn-primary" id="newConnectionButton">New Connection</button>
 
-<table id="connectionsTable" class="table table-striped">
-    <tbody>
+<div id="connection-list">
+    @foreach (var connection in Model.Connections)
+    {
+        <partial name="~/Views/Home/TfsConnectionItem.cshtml" model="connection" />
+    }
 
-        @foreach (var connection in Model.Connections)
-        {
-            <partial name="TfsConnectionItem.cshtml" model="connection"  />
-        }
-    </tbody>
-</table>
+</div>

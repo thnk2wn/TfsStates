@@ -4,11 +4,10 @@
     return $root;
 }
 
-function initNewConnection($connRoot) {
-    var $form = $connRoot.find('form');
-    var $connType = $connRoot.find('.connection-type');
-    var $useDefaultCreds = $connRoot.find('.use-default-credentials');
-    var id = $form.attr('data-id');
+function initNewConnection($connRoot, connId) {
+    var $form = $connRoot.find('#connectionForm_' + connId);
+    var $connType = $form.find('.connection-type');
+    var $useDefaultCreds = $form.find('.use-default-credentials');
 
     onConnectionTypeChange($connType[0]);
     onWindowsIdentityChange($useDefaultCreds[0]);
@@ -24,11 +23,12 @@ function initNewConnection($connRoot) {
         var data = $form.serialize();
 
         $.post($form[0].action, data, function (savedConnectionView) {
-            $connRoot.replaceWith(savedConnectionView);
+            var toReplace = $connRoot.find('.connection-root:last');
+            toReplace.replaceWith(savedConnectionView);
 
-            var $newForm = $('body').find('#connectionForm_' + id);
+            var $newForm = $('body').find('#connectionForm_' + connId);
             var $replaced = $newForm.closest('.connection-root');
-            initNewConnection($replaced);
+            initNewConnection($replaced, connId);
         });
     });
 }
