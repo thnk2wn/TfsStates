@@ -23,7 +23,9 @@ function initNewConnection($connRoot, connId) {
         var data = $form.serialize();
 
         $.post($form[0].action, data, function (savedConnectionView) {
-            var toReplace = $connRoot.find('.connection-root:last');
+            console.log('data submit complete. test mode? ' + testMode);
+            var find = "div.connection-root[data-id='" + connId + "']";
+            var toReplace = $('body').find(find);
             toReplace.replaceWith(savedConnectionView);
 
             var $newForm = $('body').find('#connectionForm_' + connId);
@@ -71,6 +73,15 @@ function onConnectionTypeChange(element) {
         $tokenRow.hide();
         $urlExample.html('i.e. http://server:8080/tfs/DefaultCollection');
         $url.attr('placeholder', 'http://server:8080/tfs/DefaultCollection');
+
+        var $user = $userCredsRow.find('.username');
+        var $pass = $userCredsRow.find('.password');
+
+        if (!$user.val() && !$pass.val()) {
+            var $useDefault = $defaultCredsRow.find('.use-default-credentials');
+            $useDefault.prop('checked', true);
+            onWindowsIdentityChange($useDefault[0]);
+        }
     }
     else {
         $defaultCredsRow.hide();
