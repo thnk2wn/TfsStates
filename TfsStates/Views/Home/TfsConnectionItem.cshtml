@@ -33,10 +33,21 @@
             <div class="row">
                 <label asp-for="Url" class="col-md-2 control-label"></label>
                 <div class="form-group col-md-10">
-                    <input asp-for="Url" class="form-control url" />
+                    <input asp-for="Url" class="form-control url" onblur="checkGenerateName(this)" />
                     <span asp-validation-for="Url" class="text-danger"></span>
                     <div>
                         <small class="url-example"></small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <label asp-for="Name" class="col-md-2 control-label"></label>
+                <div class="form-group col-md-10">
+                    <input asp-for="Name" class="form-control connection-name" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                    <div>
+                        <small>Friendly name for the connection</small>
                     </div>
                 </div>
             </div>

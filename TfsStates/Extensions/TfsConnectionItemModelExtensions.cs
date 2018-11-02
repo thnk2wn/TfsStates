@@ -13,6 +13,7 @@ namespace TfsStates.Extensions
             {
                 ConnectionType = viewModel.ConnectionType,
                 Id = viewModel.Id,
+                Name = viewModel.Name,
                 Password = viewModel.Password,
                 PersonalAccessToken = viewModel.PersonalAccessToken,
                 Url = viewModel.Url,

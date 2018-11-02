@@ -8,6 +8,8 @@ namespace TfsStates.Models
 
         public string Url { get; set; }
 
+        public string Name { get; set; }
+
         public bool UseDefaultCredentials { get; set; }
 
         public string Username { get; set; }

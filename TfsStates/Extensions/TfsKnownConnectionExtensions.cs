@@ -12,6 +12,7 @@ namespace TfsStates.Extensions
                 ConnectionType = knownConn.ConnectionType,
                 ConnectionTypes = TfsConnectionTypes.Items,
                 Id = knownConn.Id,
+                Name = knownConn.Name,
                 Password = knownConn.Password,
                 PersonalAccessToken = knownConn.PersonalAccessToken,
                 Url = knownConn.Url,

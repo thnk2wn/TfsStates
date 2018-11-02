@@ -92,6 +92,27 @@ function onConnectionTypeChange(element) {
     }    
 }
 
+function checkGenerateName(urlElement) {
+    var $container = getRootContainer(urlElement);
+    var $name = $container.find('.connection-name');
+    var url = urlElement.value;
+
+    if (!$name.val() && url) {
+        var hostname = $('<a>').prop('href', url).prop('hostname');
+        var pos = hostname.indexOf('.');
+
+        if (pos > -1) {
+            hostname = hostname.substr(0, pos);
+        }
+
+        $name.val(hostname);
+
+        if ($name.is(":focus")) {
+            $name.select();
+        }
+    }
+}
+
 function onSavingConnection(form) {
     var $form = $(form);
     var $container = $form.parent();

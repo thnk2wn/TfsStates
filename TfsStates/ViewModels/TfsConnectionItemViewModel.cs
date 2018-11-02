@@ -13,6 +13,11 @@ namespace TfsStates.ViewModels
         [Required]
         public string Url { get; set; }
 
+        [Required]
+        [MinLength(3)]
+        [MaxLength(100)]
+        public string Name { get; set; }
+
         [DisplayName("Use Default Credentials")]
         public bool UseDefaultCredentials { get; set; }
 
