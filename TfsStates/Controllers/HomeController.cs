@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using ElectronNET.API;
 using Humanizer;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using TfsStates.Models;
 using TfsStates.Services;
 using TfsStates.ViewModels;
@@ -58,21 +59,28 @@ namespace TfsStates.Controllers
             return View(model);
         }
 
-        [Route("/home/iterations/{project}")]
-        public async Task<IActionResult> GetIterations(string project)
+        [Route("/home/iterations/{connectionId}/{project}")]
+        public async Task<IActionResult> GetIterations(Guid connectionId, string project)
         {
-            var iterations = await GetIterationData(project);
+            var iterations = await GetIterationData(connectionId, project);
             return Json(iterations);
         }
 
-        private async Task<List<string>> GetIterationData(string project)
+        private async Task<List<string>> GetIterationData(Guid connectionId, string project)
+        {
+            var knownConn = await this.settingsService.GetConnection(connectionId);
+            var iterations = await GetIterationData(knownConn, project);
+            return iterations;
+        }
+
+        private async Task<List<string>> GetIterationData(TfsKnownConnection knownConn, string project)
         {
             var iterations = new List<string>
             {
                 {NoIterationSelected}
             };
 
-            var projectIterations = await this.projectService.GetIterations(project);
+            var projectIterations = await this.projectService.GetIterations(knownConn, project);
 
             if (projectIterations != null)
             {
@@ -84,6 +92,11 @@ namespace TfsStates.Controllers
 
         public async Task<IActionResult> RunReport(TfsStatesViewModel viewModel)
         {
+            if (viewModel.ConnectionId == Guid.Empty)
+            {
+                ModelState.AddModelError(nameof(viewModel.ConnectionId), "Connection is required");
+            }
+
             if (string.IsNullOrEmpty(viewModel.Project) || viewModel.Project == NoProjectSelected)
             {
                 ModelState.AddModelError(nameof(viewModel.Project), "Project is required");
@@ -108,10 +121,12 @@ namespace TfsStates.Controllers
 
             TfsQueryResult queryResult = null;
 
+            var knownConn = await this.settingsService.GetConnection(viewModel.ConnectionId);
+
             try 
             { 
                 SendProgress($"Querying project {viewModel.Project}, iteration under {viewModel.Iteration}...");
-                queryResult = await this.tfsQueryService.Query(viewModel);
+                queryResult = await this.tfsQueryService.Query(knownConn, viewModel);
             }
             catch (Exception ex)
             {
@@ -123,21 +138,22 @@ namespace TfsStates.Controllers
                 return View(ViewName, viewModel);
             }
 
-            // var json = JsonConvert.SerializeObject(queryResult);
+            if (queryResult.TfsItems.Count > 0)
+            {
+                var fName = $"TfsStates_{DateTime.Now.Ticks}.xlsx";
+                var filename = await FileUtility.GetFilename(fName);
+                SendProgress($"Writing {filename}...");
 
-            var fName = $"TfsStates_{DateTime.Now.Ticks}.xlsx";
-            var filename = await FileUtility.GetFilename(fName);
-            SendProgress($"Writing {filename}...");
+                var projectUrl = $"{knownConn.Url}/{viewModel.Project}";
+                this.excelWriterService.Write(filename, queryResult.TfsItems, projectUrl);
 
-            var knownConn = await this.settingsService.GetActiveConnection();
-            var projectUrl = $"{knownConn.Url}/{viewModel.Project}";
-            this.excelWriterService.Write(filename, queryResult.TfsItems, projectUrl);
+                SendProgress($"Launching {filename}...");
+                System.Threading.Thread.Sleep(1000);
 
-            SendProgress($"Launching {filename}...");
-            System.Threading.Thread.Sleep(1000);
+                viewModel.ResultFilename = fName;
 
-            viewModel.ResultFilename = fName;
-            await Electron.Shell.OpenExternalAsync(filename);
+                await Electron.Shell.OpenExternalAsync(filename);
+            }
 
             // eat file in use exception
             try 
@@ -146,12 +162,18 @@ namespace TfsStates.Controllers
             }
             catch (IOException ioEx) { }
 
-            var chart = chartService.CreateBarChart(queryResult);
-            ViewData["chart"] = chart;
+            if (queryResult.TfsItems.Count > 0)
+            {
+                var chart = chartService.CreateBarChart(queryResult);
+                ViewData["chart"] = chart;
+            }
 
             sw.Stop();
-            var totalTransitions = queryResult.TfsItems.Sum(x => x.TransitionCount);
-            var avgTransitions = Math.Round(queryResult.TfsItems.Average(x => x.TransitionCount), 0);
+            var items = queryResult.TfsItems;
+            var totalTransitions = items.Sum(x => x.TransitionCount);
+            var avgTransitions = items.Count > 0 
+                ? Math.Round(items.Average(x => x.TransitionCount), 0)
+                : 0;
 
             viewModel.FinalProgress = new ReportProgress
             {
@@ -184,35 +206,68 @@ namespace TfsStates.Controllers
             }
         }
 
+        private bool ShouldSelectConnection(TfsKnownConnection knownConn, ReportRun lastReportRun)
+        {
+            if (lastReportRun == null) return false;
+            var select = knownConn.Id == lastReportRun.ConnectionId;
+            return select;
+        }
+
         private async Task LoadLookups(TfsStatesViewModel model)
         {
             model = model ?? new TfsStatesViewModel();
 
             if (model.Projects?.Any() ?? false) return;
 
+            model.Connections.Add(new SelectListItem
+            {
+                Text = "- Select connection -"
+            });
+
             var settingsUrl = Url.Action("Index", "Settings");            
             model.Projects.Insert(0, NoProjectSelected);
+
+            TfsKnownConnection defaultConnection = null;
+            var lastReportRun = await this.reportHistoryService.GetLastRunSettings();
 
             try
             {
                 var connections = await settingsService.GetConnections();
-                var activeConnection = connections?.GetActiveConnection();
 
-                if (connections == null)
+                if (connections == null || (connections.Connections?.Count ?? 0) == 0)
                 {
                     model.RunReadyState.NotReady(
                         $"<a href='{settingsUrl}'>TFS settings</a> need to first be supplied.");
                 }
-                else if (activeConnection == null)
+                else
                 {
-                    model.RunReadyState.NotReady(
-                        $"No active connection. Check <a href='{settingsUrl}'>TFS settings</a>.");
-                }
-                else if (!activeConnection.IsSet())
-                {
-                    model.RunReadyState.NotReady(
-                        $"Some <a href='{settingsUrl}'>TFS settings</a> are missing and " +
-                        $"must first be supplied.");
+                    model.Connections.AddRange(
+                        connections
+                        .Connections
+                        .OrderBy(c => c.Name)
+                        .Select(c =>
+                            new SelectListItem
+                            {
+                                Text = c.Name,
+                                Value = c.Id.ToString(),
+                                Selected = (1 == connections.Connections.Count
+                                    || ShouldSelectConnection(c, lastReportRun))
+                            }));
+
+                    if (model.ConnectionId == Guid.Empty 
+                        && lastReportRun != null 
+                        && connections.Connection(lastReportRun.ConnectionId) != null)
+                    {
+                        defaultConnection = connections.Connection(lastReportRun.ConnectionId);
+                    }
+                    else if (model.ConnectionId != Guid.Empty)
+                    {
+                        defaultConnection = connections.Connection(model.ConnectionId);
+                    }
+                    else if (connections.Connections.Count == 1)
+                    {
+                        defaultConnection = connections.Connections.First();
+                    }
                 }
             }
             catch (Exception ex)
@@ -225,32 +280,34 @@ namespace TfsStates.Controllers
 
             if (model.RunReadyState.State == TfsStatesViewModel.RunStates.NotReady) return;
 
-            try
+            if (defaultConnection != null)
             {
-                var projectNames = await this.projectService.GetProjectNames();
-
-                if (projectNames == null || !projectNames.Any())
+                try
                 {
+                    var projectNames = await this.projectService.GetProjectNames(defaultConnection);
+
+                    if (projectNames == null || !projectNames.Any())
+                    {
+                        model.RunReadyState.NotReady(
+                            $"No TFS projects found. Check <a href='{settingsUrl}'>TFS settings</a> " +
+                            $"and try again.");
+                    }
+                    else
+                    {
+                        model.Projects.AddRange(projectNames);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(ex);
                     model.RunReadyState.NotReady(
-                        $"No TFS projects found. Check <a href='{settingsUrl}'>TFS settings</a> " +
-                        $"and try again.");
+                        $"Error loading TFS projects. Check <a href='{settingsUrl}'>TFS settings</a> " +
+                        $"and your connectivity and try again.");
                 }
-                else
-                {
-                    model.Projects.AddRange(projectNames);
-                }
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine(ex);
-                model.RunReadyState.NotReady(
-                    $"Error loading TFS projects. Check <a href='{settingsUrl}'>TFS settings</a> " +
-                    $"and your connectivity and try again.");
-            }
 
-            if (model.RunReadyState.State == TfsStatesViewModel.RunStates.NotReady) return;
-
-            var lastReportRun = await this.reportHistoryService.GetLastRunSettings();
+                if (model.RunReadyState.State == TfsStatesViewModel.RunStates.NotReady) return;
+            }
+            
 
             if (lastReportRun != null)
             {
@@ -260,13 +317,14 @@ namespace TfsStates.Controllers
                 }
             }
 
-            if (!string.IsNullOrEmpty(model.Project)
+            if (defaultConnection != null
+                && !string.IsNullOrEmpty(model.Project)
                 && model.Project != NoProjectSelected
                 && (!model.Iterations?.Any() ?? false))
             {
                 try 
                 { 
-                    model.Iterations = await GetIterationData(model.Project);
+                    model.Iterations = await GetIterationData(defaultConnection, model.Project);
                 }
                 catch (Exception ex)
                 {

@@ -6,6 +6,7 @@ using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using TfsStates.Extensions;
+using TfsStates.Models;
 
 namespace TfsStates.Services
 {
@@ -19,11 +20,9 @@ namespace TfsStates.Services
         }
 
         // TODO: Consider caching such as https://github.com/alastairtree/LazyCache?WT.mc_id=-blog-scottha
-        public async Task<List<string>> GetProjectNames()
+        public async Task<List<string>> GetProjectNames(TfsKnownConnection knownConn)
         {
-            var vssConnection = await this.tfsSettingsService.GetActiveVssConnection();
-            if (vssConnection == null) return null;
-            vssConnection.Settings.SendTimeout = TimeSpan.FromSeconds(AppSettings.DefaultTimeoutSeconds);
+            var vssConnection = knownConn.ToVssConnection();
 
             var projectClient = vssConnection.GetClient<ProjectHttpClient>();
             var states = ProjectState.Unchanged | ProjectState.WellFormed;
@@ -36,11 +35,9 @@ namespace TfsStates.Services
             return projectNames;
         }
 
-        public async Task<List<string>> GetIterations(string projectName)
+        public async Task<List<string>> GetIterations(TfsKnownConnection knownConn, string projectName)
         {
-            var vssConnection = await this.tfsSettingsService.GetActiveVssConnection();
-            if (vssConnection == null) return null;
-            vssConnection.Settings.SendTimeout = TimeSpan.FromSeconds(AppSettings.DefaultTimeoutSeconds);
+            var vssConnection = knownConn.ToVssConnection();
 
             var client = vssConnection.GetClient<WorkItemTrackingHttpClient>();
 

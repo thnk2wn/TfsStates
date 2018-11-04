@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
 using Newtonsoft.Json;
+using TfsStates.Extensions;
 using TfsStates.Models;
 
 namespace TfsStates.Services
@@ -34,12 +35,7 @@ namespace TfsStates.Services
 
         public async Task<TfsKnownConnections> GetConnections()
         {
-            var filename = await GetFilename();
-
-            if (!File.Exists(filename)) return null;
-
-            var json = await File.ReadAllTextAsync(filename);
-            var model = JsonConvert.DeserializeObject<TfsKnownConnections>(json);
+            var model = await GetRawConnections() ?? new TfsKnownConnections();
 
             foreach (var connection in model.Connections)
             {
@@ -63,16 +59,17 @@ namespace TfsStates.Services
 
         public async Task<TfsKnownConnections> GetConnectionsOrDefault()
         {
-            var model = (await GetConnections())
-                ?? new TfsKnownConnections { Connections = new List<TfsKnownConnection>() };
+            var model = (await GetConnections()) ?? new TfsKnownConnections();
             return model;
         }
 
-        public async Task<TfsKnownConnection> GetActiveConnection()
+        public async Task<TfsKnownConnection> GetConnection(Guid connectionId)
         {
             var connections = await GetConnections();
-            var connection = connections?.GetActiveConnection();
-            return connection;
+            if (!connections.Any()) return null;
+
+            var conn = connections.Connection(connectionId);
+            return conn;
         }
 
         public async Task<bool> Remove(Guid connectionId)
@@ -94,7 +91,7 @@ namespace TfsStates.Services
         public async Task Save(TfsKnownConnection connection)
         {
             string filename = await GetFilename();
-            var connections = await GetConnectionsOrDefault();
+            var connections = await GetRawConnections() ?? new TfsKnownConnections();
             var originalPassword = connection.Password;
             var originalToken = connection.PersonalAccessToken;
 
@@ -126,13 +123,7 @@ namespace TfsStates.Services
 
             connection.Password = originalPassword;
             connection.PersonalAccessToken = originalToken;
-        }
-
-        private static async Task SaveConnections(string filename, TfsKnownConnections connections)
-        {
-            var json = JsonConvert.SerializeObject(connections, Formatting.Indented);
-            await File.WriteAllTextAsync(filename, json);
-        }
+        }        
 
         public async Task<TfsConnectionValidationResult> Validate(TfsKnownConnection connection)
         {
@@ -169,6 +160,24 @@ namespace TfsStates.Services
             {
                 Message = $"Successfully connected to {connection.Url}."
             };
+        }
+
+        private async Task<TfsKnownConnections> GetRawConnections()
+        {
+            var filename = await GetFilename();
+
+            if (!File.Exists(filename)) return null;
+
+            var json = await File.ReadAllTextAsync(filename);
+            var model = JsonConvert.DeserializeObject<TfsKnownConnections>(json);
+
+            return model;
+        }
+
+        private static async Task SaveConnections(string filename, TfsKnownConnections connections)
+        {
+            var json = JsonConvert.SerializeObject(connections, Formatting.Indented);
+            await File.WriteAllTextAsync(filename, json);
         }
     }
 }

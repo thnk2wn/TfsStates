@@ -6,6 +6,6 @@ namespace TfsStates.Services
 {
     public interface ITfsQueryService
     {
-        Task<TfsQueryResult> Query(TfsStatesViewModel model);
+        Task<TfsQueryResult> Query(TfsKnownConnection knownConn, TfsStatesViewModel model);
     }
 }

@@ -6,19 +6,17 @@ namespace TfsStates.Models
 {
     public class TfsKnownConnections
     {
-        public Guid? ActiveConnectionId { get; set; }
+        public TfsKnownConnections()
+        {
+            Connections = new List<TfsKnownConnection>();
+        }
 
         public List<TfsKnownConnection> Connections { get; set; }
 
-        public TfsKnownConnection GetActiveConnection()
+        public TfsKnownConnection Connection(Guid connectionId)
         {
-            if (Connections == null || !Connections.Any())
-            { 
-                return null;
-            }
-
-            // TODO: Name for connection
-            return Connections.FirstOrDefault(c => c.Id == ActiveConnectionId);
+            if (Connections == null) return null;
+            return Connections.FirstOrDefault(c => c.Id == connectionId);
         }
     }
 }

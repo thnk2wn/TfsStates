@@ -1,4 +1,7 @@
-﻿using TfsStates.Models;
+﻿using System;
+using Microsoft.VisualStudio.Services.WebApi;
+using TfsStates.Models;
+using TfsStates.Services;
 using TfsStates.ViewModels;
 
 namespace TfsStates.Extensions
@@ -21,6 +24,17 @@ namespace TfsStates.Extensions
             };
 
             return vm;
+        }
+
+        public static VssConnection ToVssConnection(this TfsKnownConnection knownConn)
+        {
+            if (knownConn == null) return null;
+
+            var creds = TfsCredentialsFactory.Create(knownConn);
+            var vssConnection = new VssConnection(new Uri(knownConn.Url), creds);
+            vssConnection.Settings.SendTimeout = TimeSpan.FromSeconds(AppSettings.DefaultTimeoutSeconds);
+
+            return vssConnection;
         }
     }
 }

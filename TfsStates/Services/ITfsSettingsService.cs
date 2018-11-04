@@ -12,7 +12,7 @@ namespace TfsStates.Services
 
         Task<TfsKnownConnections> GetConnectionsOrDefault();
 
-        Task<TfsKnownConnection> GetActiveConnection();
+        Task<TfsKnownConnection> GetConnection(Guid connectionId);
 
         Task<bool> HasSettings();
 

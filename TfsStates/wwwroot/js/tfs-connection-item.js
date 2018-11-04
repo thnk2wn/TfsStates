@@ -31,6 +31,12 @@ function initNewConnection($connRoot, connId) {
             var $newForm = $('body').find('#connectionForm_' + connId);
             var $replaced = $newForm.closest('.connection-root');
             initNewConnection($replaced, connId);
+        }).fail(function () {
+            afterSave($form);
+
+            $.notify({
+                message: 'Unexpected error occurred. Check logs and try again.'
+            }, { type: 'danger' });
         });
     });
 }
@@ -98,14 +104,22 @@ function checkGenerateName(urlElement) {
     var url = urlElement.value;
 
     if (!$name.val() && url) {
-        var hostname = $('<a>').prop('href', url).prop('hostname');
-        var pos = hostname.indexOf('.');
+        var href = $('<a>').prop('href', url);
+        var hostname = href.prop('hostname');
+        var name;
 
-        if (pos > -1) {
-            hostname = hostname.substr(0, pos);
+        if (hostname.toLowerCase() === 'dev.azure.com') {
+            name = href.prop('pathname').replace('/', '');
         }
+        else {
+            var pos = hostname.indexOf('.');
 
-        $name.val(hostname);
+            if (pos > -1) {
+                name = hostname.substr(0, pos);
+            }
+        }        
+
+        $name.val(name);
 
         if ($name.is(":focus")) {
             $name.select();
@@ -141,7 +155,7 @@ function onSavingConnection(form) {
 function afterSave($form) {
     $form.find(".save-button").prop('disabled', false);
     $form.find(".delete-button").prop('disabled', false);
-    $form.find(".delete-button").prop('disabled', true);
+    $form.find(".test-button").prop('disabled', false);
     $form.find(".saving-label").hide();
 }
 

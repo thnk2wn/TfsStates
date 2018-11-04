@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using TfsStates.Models;
 
 namespace TfsStates.ViewModels
@@ -9,6 +12,7 @@ namespace TfsStates.ViewModels
         {
             this.Projects = new List<string>();
             this.Iterations = new List<string>();
+            this.Connections = new List<SelectListItem>();
 
             this.RunReadyState = new RunReadyStateModel
             {
@@ -18,9 +22,14 @@ namespace TfsStates.ViewModels
             this.MinTransitions = 1;
         }
 
+        public List<SelectListItem> Connections { get; set; }
+
         public List<string> Projects { get; set; }
 
         public List<string> Iterations { get; set; }
+
+        [DisplayName("Connection")]
+        public Guid ConnectionId { get; set; }
 
         public string Project { get; set; }
 

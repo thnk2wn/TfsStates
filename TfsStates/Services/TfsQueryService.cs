@@ -34,12 +34,10 @@ namespace TfsStates.Services
             this.broadcastService = broadCastService;
         }
 
-        public async Task<TfsQueryResult> Query(TfsStatesViewModel model)
+        public async Task<TfsQueryResult> Query(TfsKnownConnection knownConn, TfsStatesViewModel model)
         {
             var sw = Stopwatch.StartNew();
-            var vssConnection = await this.tfsSettingsService.GetActiveVssConnection();
-            if (vssConnection == null) throw new InvalidOperationException("no connection");
-            vssConnection.Settings.SendTimeout = TimeSpan.FromSeconds(AppSettings.DefaultTimeoutSeconds);
+            var vssConnection = knownConn.ToVssConnection();
 
             this.workItemClient = vssConnection.GetClient<WorkItemTrackingHttpClient>();
             var wiql = TfsQueryBuilder.BuildQuery(model);

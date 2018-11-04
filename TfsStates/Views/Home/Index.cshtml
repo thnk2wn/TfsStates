@@ -19,17 +19,22 @@
         </div>
     }
 
-    <div class="row">
-        <div class="col-md-6">
-            <label asp-for="Project" class="control-label"></label>
-            <select asp-for="Project" asp-items="@(new SelectList(Model.Projects))" id="Project"></select>
-        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <label asp-for="ConnectionId" class="control-label"></label><br/>
+                <select asp-for="ConnectionId" asp-items="@Model.Connections"></select>
+            </div>
 
-        <div class="col-md-6">
-            <label asp-for="Iteration" class="control-label">Iteration Under</label>
-            <select asp-for="Iteration" asp-items="@(new SelectList(Model.Iterations))" id="Iteration"></select>
+            <div class="col-md-4">
+                <label asp-for="Project" class="control-label"></label><br/>
+                <select asp-for="Project" asp-items="@(new SelectList(Model.Projects))" id="Project"></select>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="Iteration" class="control-label">Iteration Under</label><br/>
+                <select asp-for="Iteration" asp-items="@(new SelectList(Model.Iterations))" id="Iteration"></select>
+            </div>
         </div>
-    </div>
 
     <div class="row" style="margin-top: 10px; ">
         <div class="col-md-12">
@@ -42,7 +47,7 @@
             <div class="panel panel-primary">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        Work Items Processed <span class="badge" id="progressCount" style="maring-left: 4px;">0</span>
+                        Work Items Processed <span class="badge" id="progressCount" style="margin-left: 4px;">0</span>
                         <span id="progressPer" style="margin-left: 10px;"></span>
                     </h3>
                 </div>
@@ -78,7 +83,6 @@
                                 <button type="button" class="btn btn-success" onclick="viewReport('@Model.ResultFilename')">
                                     View Report
                                 </button>
-                                @*<a id="viewReport" href="javascript: viewReport('@Model.ResultFilename');">View Report</a>*@
                             </div>
                         }
 
@@ -105,19 +109,18 @@
     </environment>
 
     <script type="text/javascript">
-        var allIterationsOption = function () {
+        var selectIterationOption = function () {
             return '<option value="">- Select iteration -</option>';
         };
 
-        var getIterations = function (projectName, index) {
-            var url = "/home/iterations/" + projectName;
+        var getIterations = function (connectionId, projectName, index) {
+            var url = `/home/iterations/${connectionId}/${projectName}`;
             var iterationCombo = $('#Iteration');
             iterationCombo.html('<option value="">Loading...</option>');
 
-            if (index > 0) {
+            if (index > 0 && projectName && connectionId) {
                 $.get(url, function (data) {
                     var output = [];
-                    // output.push(allIterationsOption());
 
                     $.each(data, function (key, value) {
                         output.push('<option value="' + value + '">' + value + '</option>');
@@ -126,13 +129,13 @@
                     iterationCombo.html(output.join(''));
                 })
                 .fail(function () {
-                    iterationCombo.html(allIterationsOption());
+                    iterationCombo.html(selectIterationOption());
                 })
                 .always(function () {
                 });
             }
             else {
-                iterationCombo.html(allIterationsOption());
+                iterationCombo.html(selectIterationOption());
             }
         };
 
@@ -153,11 +156,12 @@
             const { ipcRenderer } = require("electron");
 
             $("#Project").change(function () {
-                getIterations(this.value, this.selectedIndex);
+                var connectionId = $('#ConnectionId').val();
+                getIterations(connectionId, this.value, this.selectedIndex);
             });
 
             if ($("#Iteration option").length === 0) {
-                $('#Iteration').html(allIterationsOption());
+                $('#Iteration').html(selectIterationOption());
             }
 
             $("#reportForm").submit(function (event) {

@@ -10,8 +10,6 @@ namespace TfsStates.Extensions
         {
             var vm = new TfsConnectionViewModel
             {
-                ActiveConnectionId = knownConnections.ActiveConnectionId,
-
                 Connections = knownConnections
                     .Connections?
                     .Select(c => c.ToViewModel())
@@ -19,6 +17,11 @@ namespace TfsStates.Extensions
             };
 
             return vm;
+        }
+
+        public static bool Any(this TfsKnownConnections connections)
+        {
+            return connections?.Connections != null && connections.Connections.Any();
         }
     }
 }
