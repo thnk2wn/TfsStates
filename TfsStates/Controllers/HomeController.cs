@@ -59,6 +59,22 @@ namespace TfsStates.Controllers
             return View(model);
         }
 
+        [Route("/home/connections/{connectionId}/projects")]
+        public async Task<IActionResult> GetProjects(Guid connectionId)
+        {
+            var connection = await this.settingsService.GetConnection(connectionId);
+
+            var items = new List<string> { { NoProjectSelected } };
+            var projectNames = await this.projectService.GetProjectNames(connection);
+
+            if (projectNames != null)
+            {
+                items.AddRange(projectNames);
+            }
+
+            return Json(items);
+        }
+
         [Route("/home/iterations/{connectionId}/{project}")]
         public async Task<IActionResult> GetIterations(Guid connectionId, string project)
         {
@@ -309,9 +325,11 @@ namespace TfsStates.Controllers
             }
             
 
-            if (lastReportRun != null)
+            if (lastReportRun != null && defaultConnection != null)
             {
-                if (model.Projects?.Any() ?? false && model.Projects.Contains(lastReportRun.Project))
+                if (model.Projects?.Any() ?? false 
+                    && lastReportRun.ConnectionId == defaultConnection.Id
+                    && model.Projects.Contains(lastReportRun.Project))
                 {
                     model.Project = lastReportRun.Project;
                 }

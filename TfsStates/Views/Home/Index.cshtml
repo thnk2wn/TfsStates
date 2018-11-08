@@ -113,6 +113,10 @@
             return '<option value="">- Select iteration -</option>';
         };
 
+        var selectProjectOption = function () {
+            return '<option value="">- Select project -</option>';
+        };
+
         var getIterations = function (connectionId, projectName, index) {
             var url = `/home/iterations/${connectionId}/${projectName}`;
             var iterationCombo = $('#Iteration');
@@ -139,6 +143,32 @@
             }
         };
 
+        var getProjects = function (connectionId, index) {
+            var url = `/home/connections/${connectionId}/projects`
+            var projectCombo = $('#Project');
+            projectCombo.html('<option value="">Loading...</option>');
+
+            if (index > 0 && connectionId) {
+                $.get(url, function (data) {
+                    var output = [];
+
+                    $.each(data, function (key, value) {
+                        output.push('<option value="' + value + '">' + value + '</option>');
+                    });
+
+                    projectCombo.html(output.join(''));
+                })
+                .fail(function () {
+                    projectCombo.html(selectProjectOption());
+                })
+                .always(function () {
+                });
+            }
+            else {
+                projectCombo.html(selectProjectOption());
+            }
+        };
+
         var viewReport = function (name) {
             var url = "/home/viewreport/" + name;
 
@@ -154,6 +184,11 @@
 
         $(function () {
             const { ipcRenderer } = require("electron");
+
+            $("#ConnectionId").change(function () {
+                var connectionId = this.value;
+                getProjects(connectionId, this.selectedIndex);
+            });
 
             $("#Project").change(function () {
                 var connectionId = $('#ConnectionId').val();
