@@ -72,6 +72,7 @@ function onConnectionTypeChange(element) {
     var type = element.value;
     var $urlExample = $root.find('.url-example');
     var $url = $root.find('.url');
+    var $useDefault = $defaultCredsRow.find('.use-default-credentials');
 
     if (type === typeNtlm) {
         $defaultCredsRow.show();
@@ -83,8 +84,7 @@ function onConnectionTypeChange(element) {
         var $user = $userCredsRow.find('.username');
         var $pass = $userCredsRow.find('.password');
 
-        if (!$user.val() && !$pass.val()) {
-            var $useDefault = $defaultCredsRow.find('.use-default-credentials');
+        if (!$user.val() && !$pass.val()) {            
             $useDefault.prop('checked', true);
             onWindowsIdentityChange($useDefault[0]);
         }
@@ -95,6 +95,7 @@ function onConnectionTypeChange(element) {
         $tokenRow.show();
         $urlExample.html('i.e. <em>https://dev.azure.com/org-name</em> &nbsp; or &nbsp; <em>https://domain.visualstudio.com</em>');
         $url.attr('placeholder', 'https://dev.azure.com/org-name');
+        $useDefault.prop('checked', false);
     }    
 }
 

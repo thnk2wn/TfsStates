@@ -77,7 +77,7 @@ namespace TfsStates.Services
             string filename = await GetFilename();
             if (!File.Exists(filename)) return false;
 
-            var connections = await GetConnections();
+            var connections = await GetRawConnections() ?? new TfsKnownConnections();
             var connection = connections.Connections.FirstOrDefault(c => c.Id == connectionId);
 
             if (connection == null) return false;
