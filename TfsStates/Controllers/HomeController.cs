@@ -298,6 +298,8 @@ namespace TfsStates.Controllers
 
             if (defaultConnection != null)
             {
+                model.ConnectionId = defaultConnection.Id;
+
                 try
                 {
                     var projectNames = await this.projectService.GetProjectNames(defaultConnection);
