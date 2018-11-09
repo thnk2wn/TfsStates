@@ -16,14 +16,13 @@ Click for a larger version.
 The [installation](https://github.com/thnk2wn/TfsStates/wiki/Installation) page shows where to download and how to install the application.
 
 # Configuration
-* [Initial Configuration](https://github.com/thnk2wn/TfsStates/wiki/Initial-Configuration) details connecting to TFS
-* [Authenticating with Azure DevOps](https://github.com/thnk2wn/TfsStates/wiki/Authenticating-with-Azure-DevOps) details connecting to Azure DevOps
+* [Initial Configuration](https://github.com/thnk2wn/TfsStates/wiki/Initial-Configuration) details connecting to TFS.
 
 # Running
-[Running the TFS States Report](https://github.com/thnk2wn/TfsStates/wiki/Running-TFS-States-Report) shows the process of running the report
+[Running the TFS States Report](https://github.com/thnk2wn/TfsStates/wiki/Running-TFS-States-Report) shows the process of running the report.
 
 # Uninstalling 
 [Uninstalling](https://github.com/thnk2wn/TfsStates/wiki/Uninstalling) shows how to remove the application.
 
 # Contributions and Backlog
-This tool was made quickly with limited spare time. If you have suggestions or contributions, feel free to [add an issue / request](https://github.com/thnk2wn/TfsStates/issues) or [create a pull request](https://github.com/thnk2wn/TfsStates/pulls)
+This tool was made quickly with limited spare time. If you have suggestions or contributions, feel free to [add an issue / request](https://github.com/thnk2wn/TfsStates/issues) or [create a pull request](https://github.com/thnk2wn/TfsStates/pulls).
